@@ -1,0 +1,54 @@
+1:package example4;
+2:
+3:import java.io.*;
+4:
+5:public class hw_4_1 {
+6:	public static void main(String[] args) {
+7:		String buf; // 문자열을 저장
+8:		FileInputStream fin = null; // 파일을 바이트 단위로 읽음 
+9:		FileOutputStream fout = null; // 바이트 단위로 데이터를 읽어 파일에 출력
+10:		
+11:		
+12:		if(args.length != 2) {
+13:			System.out.println("소스파일 및 대상파일을 지정하십시오."); // 인수가 2개가 아닐경우
+14:			System.exit(1); // 비정상 종료
+15:		}
+16:		try {
+17:			fin = new FileInputStream(args[0]); // 읽을 파일 저장
+18:			fout = new FileOutputStream(args[1]); // 쓸 파일 저장
+19:		}catch(Exception e) { // 예외 발생 시 
+20:			System.out.println(e); //출력
+21:			System.exit(1);
+22:		}
+23:		BufferedReader read = new BufferedReader(new InputStreamReader(fin)); // 문자열을 읽을 때 버퍼를 이용해서 읽음
+24:		PrintWriter pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(fout)),true); // 바이트 스트림을 문자스트림을 변환하고, 버퍼를 이용하여 읽으며, 줄단위 출력을 함 , 자동 플러쉬
+25:		int num = 1; //  처음 시작 번호
+26:		while(true) { // 무한 반복
+27:			try {
+28:				buf=read.readLine(); // 버퍼를 이용해 한줄 읽음
+29:				if(buf==null)break; // 읽을 내용이 더 없으면 끝
+30:			}catch(IOException e) { // 입출력 오류
+31:				System.out.println(e); // 오류 출력
+32:				break;
+33:			}
+34:			buf = num + ":" + buf; // 1 : 문자열 형태로 저장
+35:			pw.println(buf); // 문자열 작성
+36:			num++; // 번호 상승
+37:		}
+38:		// 저장된 파일을 콘솔에 출력
+39:		try {
+40:			LineNumberReader lnr = new LineNumberReader(new FileReader(args[1])); // 파을을 문자기반, 줄 단위로 읽음 
+41:			while((buf = lnr.readLine()) != null) { // EOF 만나면 종료
+42:			System.out.println(buf); // 문자열 콘솔 출력
+43:			}
+44:		}catch(IOException e) {
+45:			System.err.println(e.toString());
+46:		}
+47:		try {
+48:			fin.close(); // inputStream을 닫음
+49:			pw.close(); // PrintWriter 닫기
+50:		}catch(IOException e) { // 입출력 오류
+51:			System.out.println(e); // 오류 출력
+52:		}
+53:	}
+54:}

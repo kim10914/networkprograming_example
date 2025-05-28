@@ -1,0 +1,46 @@
+package example3;
+
+import java.awt.*;
+import java.awt.event.*;
+import java.io.*;
+
+public class FileTest_3_1 extends Frame implements ActionListener {
+	private TextField enter;
+	private TextArea output;
+	public FileTest() {
+		super("File 클래스 테스트");
+		enter = new TextField("파일 및 디렉토리명을 입력하세요");
+		enter.addActionListener(this);
+		output = new TextArea();
+		add(enter, BorderLayout.NORTH);
+		add(output, BorderLayout.CENTER);
+		addWindowListener(new WinListener());
+		setSize(400, 400);
+		setVisible(true);
+	}
+	public void actionPerformed(ActionEvent e) {
+		File name = new File(e.getActionCommand());
+		if(name.exists()) {
+			output.setText(name.getName() + "이 존재한다.\n" + 
+				(name.isFile() ? "파일이다.\n" : "파일이 아니다.\n") + 
+				(name.isDirectory() ? "절대경로이다.\n" : "절대경로가 아니다.\n") +
+				( name.isAbsolute() ? "절대경로이다.\n" : "절대경로가 아니다.\n") +
+				"마지막 수정날짜은 : " + name.lastModified() + 
+				"\n파일의 길이는 : " + name.length() + 
+				"\n파일의 경로는 : " + name.getPath() +
+				"\n절대경로는 : " + name.getAbsolutePath() +
+				"\n상위 디렉토리는 : " + name.getParent() );
+			if(name.isFile()) {
+				try {
+					RandomAccessFile r = new RandomAccessFile(name,"r");
+					StringBuffer buf = new StringBuffer();
+					String text;
+					output.append("\n\n");
+					while((text = r.readLine()) != null)
+				}
+			}
+				
+		}
+	}
+
+}

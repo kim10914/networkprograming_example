@@ -1,0 +1,9 @@
+package example2;
+
+import java.io.*;
+import java.awt.*;
+import java.awt.event.*;
+
+public class CreateSeqFile_2_5 {
+
+}

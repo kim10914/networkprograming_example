@@ -1,0 +1,9 @@
+package example3;
+
+import java.awt.event;.*;
+import java.awt.*;
+import java.io*;
+
+public class FileTest_3_1 {
+
+}

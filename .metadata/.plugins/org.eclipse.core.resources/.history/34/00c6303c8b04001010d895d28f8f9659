@@ -1,0 +1,22 @@
+package example2;
+
+import java.io.DataInputStream;
+
+public class ReadCharString_2_4 {
+	static FileInputStream fin;
+	static DataInputStream dis;
+	public static void main(String args[]) {
+		char ch;
+		String sdata1, sdata2;
+		try {
+			fin = new FileInputStream("chardata.txt");
+			dis = new dataInputStream(fin);
+			ch = dis.readChar();
+			sdata1 = dis.readUTF();
+			sdata2 = dis.readUTF();
+			System.out.println(ch);
+			System.out.println(sdata1);
+			System.out.println(sdata2);
+		}
+	}
+}

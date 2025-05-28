@@ -1,0 +1,69 @@
+package example3;
+
+import java.io*;
+import java.awt.*;
+import java.awt.event.*;
+import java.io.IOException;
+
+public class WriteRandomFile_3_2 extends Frame implements ActionListener{
+	private TextField accountField, nameField, balanceField;
+	private Button enter, done;
+	private RandomAccessFile output;
+	private Record data;
+	public WriteRandomFile() {
+		super("파일쓰기");
+		data = new Record();
+		try {
+			output = new RandomAccessFile("customer.txt", "rw");
+		}catch(IOException e ) {
+			System.err.println(e.toString());
+			System.exit(1);
+		}
+		setSize(300,150);
+		setLayout(new GridLayout(4,2));
+		
+		add(new Label("계좌번호"));
+		accountField = new TextField();
+		add(accountField);
+		
+		add(new Label("이름"));
+		nameField = new TextField();
+		add(nameField);
+		
+		add(new Label("잔고"));
+		balanceField = new TextField();
+		add(balanceField);
+		
+		enter = new Button("입력");
+		enter.addActionListener(this);
+		add(enter);
+		
+		done = new Button("입력");
+		done.addActionListener(this);
+		add(done);
+	}
+	public void addRecord() {
+		int accountNo = 0;
+		Double d;
+		if( ! accountField.getText().equals("")) {
+			try {
+				accountNo = Integer.parseInt(accountField.getText());
+				if(accountNo > 0 && accountNo <= 100) {
+					data.setAccount(accountNo);
+					data.setName(nameField.getText());
+					d = new Double(balanceField.getText());
+					data.setBalance(d.doubleValue());
+					output.seek(output);
+				}
+				account.setText("");
+				name.setText("");
+				balance.setText("");
+			}catch(NumberFormatException nfe) { // 계좌 번호(accountNo) 잔고(d)가 숫자가 아닐 경우(숫자 입력 예외) 
+				System.err.println("정수를 입력해야 합니다."); // 오류 메시지 출력
+			}catch(IOException io) { //입출력 예외 발생(파일 저장 중 문제가 생긴경우)
+				System.err.println(io.toString()); // 오류 출력
+				System.exit(1); // 프로그램 종료
+			}
+		}
+	}
+}

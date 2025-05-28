@@ -1,0 +1,41 @@
+package example3;
+
+import java.io*;
+import java.awt.*;
+import java.awt.event.*;
+import java.io.IOException;
+
+public class WriteRandomFile_3_2 extends Frame implements ActionListener{
+	private TextField accountField, nameField, balanceField;
+	private Button enter, done;
+	private RandomAccessFile output;
+	private Record data;
+	public WriteRandomFile() {
+		super("파일쓰기");
+		data = new Record();
+		try {
+			output = new RandomAccessFile("customer.txt", "rw");
+		}catch(IOException e ) {
+			System.err.println(e.toString());
+			System.exit(1);
+		}
+		setSize(300,150);
+		setLayout(new GridLayout(4,2));
+		
+		add(new Label("계좌번호"));
+		accountField = new TextField();
+		add(accountField);
+		
+		add(new Label("이름"));
+		nameField = new TextField();
+		add(nameField);
+		
+		add(new Label("잔고"));
+		accountField = new TextField();
+		add(accountField);
+		
+		
+		
+		
+	}
+}

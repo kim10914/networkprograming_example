@@ -1,0 +1,27 @@
+package example2;
+	
+	import java.io.*;
+public class WriteCharString_2_2 {
+	static DataOutputStream dos; //원시 데이터를 이진데이터로 저장하는 스트림 클래스(전역)
+	public static void main(String args[]) {
+		try {
+			String data; 
+			FileOutputStream fout = new FileOutputStream("chardata.txt"); //바이트단위 파일 객체 생성  
+			dos = new DataOutputStream(fout); // fout 파일을 dos로 래핑
+			dos.writeChar(65);
+			dos.writeUTF("반갑습니다");
+			dos.writeUTF("자바 채팅 프로그래밍 교재");
+		}catch(EOFException e) {
+			System.err.println(e);
+		}catch(IOException e) {
+			System.err.println(e);
+		}finally {
+			try {
+				if(dos != null) dos.close();
+				if(dos != null) dos.close();
+			}catch(IOException e) {
+				System.err.println(e);
+			}
+		}
+	}
+}

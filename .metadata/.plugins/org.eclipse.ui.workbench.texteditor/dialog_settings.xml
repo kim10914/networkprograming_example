@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<section name="Workbench">
+	<item key="hasShownOverlayPopupBefore" value="true"/>
+	<section name="org.eclipse.ui.texteditor.FindReplaceDialog">
+		<item key="selection" value="getActionCommand"/>
+		<item key="wrap" value="true"/>
+		<item key="casesensitive" value="false"/>
+		<item key="wholeword" value="false"/>
+		<item key="incremental" value="false"/>
+		<item key="isRegEx" value="false"/>
+		<list key="findhistory">
+			<item value="getActionCommand"/>
+			<item value="new"/>
+			<item value="win"/>
+			<item value="wo"/>
+		</list>
+		<list key="replacehistory">
+		</list>
+	</section>
+	<section name="org.eclipse.ui.texteditor.FindReplaceDialog_dialogBounds">
+		<item key="DIALOG_X_ORIGIN" value="807"/>
+		<item key="DIALOG_Y_ORIGIN" value="276"/>
+		<item key="DIALOG_WIDTH" value="319"/>
+		<item key="DIALOG_HEIGHT" value="370"/>
+		<item key="DIALOG_FONT_NAME" value="1|맑은 고딕|9.0|0|WINDOWS|1|-24|0|0|0|400|0|0|0|1|0|0|0|0|맑은 고딕"/>
+	</section>
+	<section name="java.lang.Class">
+		<item key="replaceBarOpen" value="false"/>
+		<list key="findhistory">
+			<item value="setLayout"/>
+			<item value="write"/>
+			<item value="PrintWriter"/>
+			<item value="BufferedWriter"/>
+			<item value="BufferedReader"/>
+			<item value="getBalance"/>
+			<item value="Record"/>
+			<item value="size"/>
+			<item value="getAccount"/>
+			<item value="setAccount"/>
+			<item value="exists"/>
+			<item value="next"/>
+			<item value="FileInputStream "/>
+		</list>
+	</section>
+</section>

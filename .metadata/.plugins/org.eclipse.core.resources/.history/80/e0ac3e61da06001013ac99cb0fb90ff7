@@ -1,0 +1,57 @@
+//FilterOutputStream 클래스를 상속하여 2개의 기본 스트림에 동시에 write
+// write(int a), write(byte[]), flussh(), close() 메서드 재정의(오버로딩)
+// 파일 한개를 생성할 경우 2개의 파일이 만들어 져야함 파일은 인자로 받기
+package example2;
+
+import java.io.*;
+
+class DoubleOutputStream extends FilterOutputStream { // 1:2 복사를 만들기 위해 메서드 재정의(FilterOutputStream을 상속받음)
+	private OutputStream DoubleOut; // 2개의 OutputStream을 사용해야 하니까 하나 만들기
+	
+    public DoubleOutputStream(OutputStream out1, OutputStream out2) { //생성자
+        super(out1); // FilterOutputStream에게 상속받은 생성자 호출
+        this.DoubleOut = out2; // 두 번째 출력 스트림은 따로 저장
+    }
+
+    public void write(int b) throws IOException { //한 바이트를 두 출력 동시에 write
+        out.write(b);        
+        DoubleOut.write(b); 
+    }
+
+    
+    public void write(byte[]b) throws IOException { // 바이트 배열 전체를 동시에 두 파일에 write
+        out.write(b);
+        DoubleOut.write(b);
+    }
+    
+    public void flush() throws IOException { //버퍼에 남아 있는 내용 출력
+        out.flush();
+        DoubleOut.flush();
+    }
+
+    
+    public void close() throws IOException { //스트림 닫기
+        out.close();
+        DoubleOut.close();
+    }
+}
+public class hw_2_4 {
+	public static void main(String[] args) {
+        try (
+            FileInputStream fis = new FileInputStream(args[0]); //원본 파일 입력을 받아 읽기
+            PushbackInputStream pushbackIn = new PushbackInputStream(new BufferedInputStream(fis)); // 파일을 여러번 읽기 위해 pushbackInputStream 사용
+            FileOutputStream fos1 = new FileOutputStream(args[1]); 
+            FileOutputStream fos2 = new FileOutputStream(args[2]); // 복사 받을 파일 생성
+        	DoubleOutputStream DoubleOut = new DoubleOutputStream(fos1, fos2) // DoubleOutStream 객체 생성
+        ) {
+            byte[] buffer = new byte[80]; // 버퍼 크기 80
+            int length; // 읽은 문자 저장 
+            while ((length = pushbackIn.read(buffer)) != -1) { // 읽은 문자만큼 반복하고 EOF 만나면 종료
+            	DoubleOut.write(buffer, 0, length); // 문자열복사 
+            }
+            DoubleOut.flush(); // 버퍼 비우기
+        } catch (IOException e) {
+            System.err.println(e.toString()); // 예외 발생 시 오류 메시지 출력
+        }
+    }
+}

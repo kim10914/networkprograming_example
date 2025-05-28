@@ -1,0 +1,27 @@
+package example2;
+
+import java.io.*;
+import java.awt.*;
+import java.awt.event.*;
+
+public class CreateSeqFile_2_5 extends Frame implements ActionListener {
+	private TextField account, name, balance;
+	private Button enter, done;
+	private DataOutputStream output;
+	public CreateSeqFile_2_5() {
+		super("고객파일을 생성");
+		try {
+			output = new DataOutputStream(new FileOutputStream("client.txt"));
+		}catch(IOException e) {
+			System.err.println(e.toString());
+			System.exit(1);
+		}
+		setSize(250,130);
+		setLayout(new GridLayout(4,2));
+		add(new Label("계좌번호"));
+		account = new TextField(20);
+		add(name);
+		add(new Label("잔고"));
+		balance = new TextField(20);
+	}
+}

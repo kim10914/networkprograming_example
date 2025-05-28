@@ -1,0 +1,135 @@
+package example2;
+
+import java.io.*;
+import java.awt.*; // GUI 컴포넌트 호출 클래스
+import java.awt.event.*; // 이벤트 처리를 위한 클래스
+
+public class hw_2_3 extends Frame implements ActionListener {
+	private TextField account, name, balance; // 입력 받는 필드
+	private Button enter, next; // 버튼
+	private DataOutputStream output; // 파일에 데이터를 저장할 출력 스트림
+	private Label count;
+	private DataInputStream input; // 파일을 읽기 위한 DataInputStream 클래스 선언
+	static int customerCount = 0; //고객수 카운트 변수
+	
+	
+	//GUI 구성
+	public hw_2_3() { //생성자
+		super("고객파일을 생성 및 읽기"); // Frame 생성자를 호출함
+		try { 
+			output = new DataOutputStream(new FileOutputStream("hw_2_3.txt")); // 바이트 단위 파일을 생성하고 DataOutputStream으로 래핑
+			input = new DataInputStream(new FileInputStream("hw_2_3.txt")); //파일을 바이트 단위로 읽는 객체를 다양한 자료형으로 읽을 수 있도록 DataInputStream(이진 파일을 문자열로 읽어옴)으로 래핑 
+		}catch(IOException e) { // 입출력 예외 발생 시(파일이 없거나, 권한이 없거나, 디스크 오류 발생) 
+			System.err.println(e.toString()); // 에러 메시지를 콘솔에 문자열로 출력
+			System.exit(1); // 예외가 발생 했으므로 종료
+		}
+		setSize(300,130); // 가로 300, 세로 130 픽셀
+		setLayout(new GridLayout(5,2)); //레이아웃을 5행 2열로 설정
+		// 컴포넌트 추가
+		add(new Label("계좌번호")); // 라벨 컴포넌트 생성 
+		account = new TextField(20); // 입력창 생성
+		add(account); // 입력창을 프레임에 추가
+		
+		add(new Label("이름")); 
+        name = new TextField(20);
+        add(name);
+        
+		
+		add(new Label("잔고"));
+		balance = new TextField(20);
+		add(balance);
+		
+		add(new Label("입력된 고객 수 ")); // 라벨 컴포넌트 생성 
+		count = new Label("0"); // 라벨 값을 0으로 초기화
+		add(count);
+		
+		enter = new Button("입력"); //버튼 객체 생성
+		enter.addActionListener(this); //enter를 통해 액션리스너를 선언 버튼 클릭 시 actionPerformed()메서드 호출
+		add(enter); // 버튼을 프레임에 추가
+		
+		next = new Button("출력"); // 닫기 버튼을 출력 버튼으로 변환
+		next.addActionListener(this);
+		add(next); 
+		
+		// 윈도우 리스터 오버라이딩
+		addWindowListener(new WindowAdapter() { // 윈도우 어뎁터를 통해 윈도우 이벤트를 감지할 리스너 추가 
+            public void windowClosing(WindowEvent e) { //윈도우 닫기 버튼(x)가 눌렸을 경우
+                System.exit(0); // 정상 종료
+            }
+        });
+		
+		setVisible(true); //GUI 창을 사용자에게 화면에 보이도록 설정
+	}
+	public void addRecord() { 
+		int accountNo = 0; //계좌번호
+		String d; //잔고
+		if(!account.getText().equals("")) { //account에 입력된 문자열을 검사, 문자열이 공백이 아닌 경우
+			try {
+				accountNo = Integer.parseInt(account.getText()); //account에 입력된 문자열을 가져와서 정수로 변환
+				if(accountNo > 0) { // 계좌번호가 양수일 경우 
+					output.writeInt(accountNo); // 파일에 정수형태로 계좌번호를 저장
+					output.writeUTF(name.getText()); // name의 문자열을 받아 UTF 형식으로 파일에 저장 
+					d=balance.getText();  // d에 잔고의 문자열을 저장
+					output.writeDouble(Double.parseDouble(d)); // d를 실수로 전환하고 파일에 저장
+				}
+				account.setText("");
+				name.setText("");
+				balance.setText(""); //입력창을 모두 초기화
+				customerCount++; // 입력된 고객 수 증가
+				count.setText(String.valueOf(customerCount)); // 입력된 고객의 수를 문자열로 변환하여 count로 세팅  
+			}catch(NumberFormatException nfe) { // 계좌 번호(accountNo) 잔고(d)가 숫자가 아닐 경우(숫자 입력 예외) 
+				System.err.println("정수를 입력해야 합니다."); // 오류 메시지 출력
+			}catch(IOException io) { //입출력 예외 발생(파일 저장 중 문제가 생긴경우)
+				System.err.println(io.toString()); // 오류 출력
+				System.exit(1); // 프로그램 종료
+			}
+		}
+	}
+	public void actionPerformed(ActionEvent e) { // 버튼이 눌렸을 때 자동으로 호출되는 이벤트 처리 메서드 오버라이딩(눌린 버튼으로 정보 받음)
+		if(e.getSource() == enter) // enter 입력 시
+		addRecord(); // 입력 받은 정보 호출
+		if(e.getSource() == next) { // 눌린 버튼이 종료(done)라면
+			int searchAccount = Integer.parseInt(account.getText());
+			readRecord(searchAccount); // readRecord()메서드 실행
+		}
+	}
+	public void readRecord(int searchAccount) {
+		int accountNo; // 계좌 번호
+		double d; // 잔고
+		String namedata; // 이름
+		try {
+			while(true) { //찾을 때 까지 무한 반복
+				accountNo = input.readInt(); // 파일에서 정수를 받아 저장
+				namedata = input.readUTF(); // 파일에서 UTF문자를 받아 저장
+				d = input.readDouble(); // 파일에서 실수를 받아 저장
+				
+				if(accountNo == searchAccount) {
+					account.setText(String.valueOf(accountNo)); // accountNo를 문자열로 변환해서 account 텍스트 필드에 출력
+					name.setText(namedata); // namedata를 받아 필드에 출력
+					balance.setText(String.valueOf(d)); // d를 문자열로 변환해서 balance 텍스트 필드에 출력
+					break;
+				}
+			}
+		}catch(EOFException eof) { // 파일의 끝(더 출력할 파일이 없다면)
+			closeFile(); // 파일 닫기
+		}catch(IOException io) { // 입출력 예외(파일 읽어오기 실패 등) 
+			System.err.println(io.toString()); // 오류 출력
+			System.exit(1); // 비정상 종료
+		}
+	}
+	
+	private void closeFile() { // 파일 닫기 메서드
+		try {
+			input.close(); // 입력 스트림(input)을 닫는다.
+			System.exit(0); // 정상 종료
+		}catch(IOException io) { // 입출력 예외(파일에 접근이 어려운 경우 등)
+			System.err.println(io.toString()); // 에러 메시지를 표준 에러 스트림에 출력
+			System.exit(1); // 비정상 종료
+		}
+	}
+	
+	public static void main(String args[]) {
+		new hw_2_3(); //CreateSeqFile_2_5 객체 생성 GUI 프로그램(생성자) 실행
+	}
+	
+}
