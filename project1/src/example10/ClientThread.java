@@ -1,233 +1,238 @@
-package SimpleChat;
-
-import java.io.*;
-import java.util.*;
-
-import javax.swing.JOptionPane;
-
-import java.net.*;
-
-public class ClientThread extends Thread
-{
-   
-   private ChatClient  ct_client; // ChatClient °´Ã¼
-   private Socket ct_sock; // Å¬¶óÀÌ¾ğÆ® ¼ÒÄÏ
-   private DataInputStream ct_in; // ÀÔ·Â ½ºÆ®¸²
-   private DataOutputStream ct_out; // Ãâ·Â ½ºÆ®¸²
-   private StringBuffer ct_buffer; // ¹öÆÛ
-   private Thread thisThread;
-   private DisplayRoom room;
-
-   private static final String SEPARATOR = "|";
-   private static final String DELIMETER = "`";
-
-   // ¸Ş½ÃÁö ÆĞÅ¶ ÄÚµå ¹× µ¥ÀÌÅÍ Á¤ÀÇ
-
-   // ¼­¹ö¿¡ Àü¼ÛÇÏ´Â ¸Ş½ÃÁö ÄÚµå
-   private static final int REQ_LOGON = 1001;
-   private static final int REQ_ENTERROOM = 1011;
-   private static final int REQ_SENDWORDS = 1021;
-   private static final int REQ_LOGOUT = 1031;
-   private static final int REQ_QUITROOM = 1041;
-
-   // ¼­¹ö·ÎºÎÅÍ Àü¼ÛµÇ´Â ¸Ş½ÃÁö ÄÚµå
-   private static final int YES_LOGON = 2001;
-   private static final int NO_LOGON = 2002;
-   private static final int YES_ENTERROOM = 2011;
-   private static final int NO_ENTERROOM = 2012;
-   private static final int MDY_USERIDS = 2013;
-   private static final int YES_SENDWORDS = 2021;
-   private static final int NO_SENDWORDS = 2022;
-   private static final int YES_LOGOUT = 2031;
-   private static final int NO_LOGOUT = 2032;
-   private static final int YES_QUITROOM = 2041;
-
-   // ¿¡·¯ ¸Ş½ÃÁö ÄÚµå
-   private static final int MSG_ALREADYUSER = 3001;
-   private static final int MSG_SERVERFULL = 3002;
-   private static final int MSG_CANNOTOPEN = 3011;
-
-   //private static MessageBox logonbox;
-
-   // ·ÎÄÃÈ£½ºÆ®¿¡¼­ »ç¿ëÇÏ±â À§ÇÏ¿© ¸¸µç »ı¼ºÀÚ
-   // ¼­¹ö¿Í Å¬¶óÀÌ¾ğÆ®°¡ °°Àº ½Ã½ºÅÛÀ» »ç¿ëÇÑ´Ù. 
-   public ClientThread(ChatClient client) {
-      try{
-         ct_sock = new Socket(InetAddress.getLocalHost(), 2777);
-         ct_in = new DataInputStream(ct_sock.getInputStream());
-         ct_out = new DataOutputStream(ct_sock.getOutputStream());
-         ct_buffer = new StringBuffer(4096);
-         thisThread = this;
-         ct_client = client; // °´Ã¼º¯¼ö¿¡ ÇÒ´ç
-      }catch(IOException e){
-          JOptionPane.showMessageDialog(null, "¼­¹ö¿¡ Á¢¼ÓÇÒ ¼ö ¾ø½À´Ï´Ù.", "¿¬°á¿¡·¯", 
-       			JOptionPane.WARNING_MESSAGE); 
-      }
-   }
-
-   public void run(){
-
-      try{
-         Thread currThread = Thread.currentThread();
-         while(currThread == thisThread){ // Á¾·á´Â LOG_OFF¿¡¼­ thisThread=null;¿¡ ÀÇÇÏ¿©
-            String recvData = ct_in.readUTF();
-            StringTokenizer st = new StringTokenizer(recvData, SEPARATOR);
-            int command = Integer.parseInt(st.nextToken());
-            switch(command){
-
-               // ·Î±×¿Â ¼º°ø ¸Ş½ÃÁö  PACKET : YES_LOGON|°³¼³½Ã°¢|ID1`ID2`ID3...
-               case YES_LOGON:{
-                  //logonbox.dispose();
-                  ct_client.cc_tfStatus.setText("·Î±×¿ÂÀÌ ¼º°øÇß½À´Ï´Ù.");
-                  String date = st.nextToken(); // ´ëÈ­¹æ °³¼³½Ã°£ -> ·Î±×¿Â ½Ã°¢À¸·Î º¯°æ
-                  ct_client.cc_tfDate.setText(date);
-                  String ids = st.nextToken(); // ´ëÈ­¹æ ´ë±âÀÚ ¸®½ºÆ®
-                  StringTokenizer users = new StringTokenizer(ids, DELIMETER);
-                  while(users.hasMoreTokens()){
-                	  ct_client.lMember.add(users.nextToken());
-                  }
-                  ct_client.cc_lstMember.setListData(ct_client.lMember);
-                  break;
-               }
-
-               // ·Î±×¿Â ½ÇÆĞ ¶Ç´Â ·Î±×¿ÂÇÏ°í ´ëÈ­¹æÀÌ °³¼³µÇÁö ¾ÊÀº »óÅÂ
-               // PACKET : NO_LOGON|errCode
-               case NO_LOGON:{
-                  int errcode = Integer.parseInt(st.nextToken());
-                  if(errcode == MSG_ALREADYUSER){
-                     //logonbox.dispose();
-           		  	 JOptionPane.showMessageDialog(null, "ÀÌ¹Ì ´Ù¸¥ »ç¿ëÀÚ°¡ ÀÖ½À´Ï´Ù.", "·Î±×¿Â", 
-              			JOptionPane.WARNING_MESSAGE); 
-                  }else if(errcode == MSG_SERVERFULL){
-                     //logonbox.dispose();
-                     JOptionPane.showMessageDialog(null, "´ëÈ­¹æÀÌ ¸¸¿øÀÔ´Ï´Ù.", "·Î±×¿Â", 
-                  			JOptionPane.WARNING_MESSAGE);
-                  }
-                  break;
-               }
-
-               // ´ëÈ­¹æ °³¼³ ¹× ÀÔÀå ¼º°ø ¸Ş½ÃÁö  PACKET : YES_ENTERROOM
-               case YES_ENTERROOM:{
-                  ct_client.dispose(); // ·Î±×¿Â Ã¢À» Áö¿î´Ù.
-                  room = new DisplayRoom(this, "´ëÈ­¹æ");
-                  room.pack();
-                  room.setVisible(true); // ´ëÈ­¹æ Ã¢À» Ãâ·ÂÇÑ´Ù.
-                  break;
-               }
-
-               // ´ëÈ­¹æ °³¼³ ¹× ÀÔÀå ½ÇÆĞ ¸Ş½ÃÁö  PACKET : NO_ENTERROOM|errCode
-               case NO_ENTERROOM:{
-                  int roomerrcode = Integer.parseInt(st.nextToken());
-                  if(roomerrcode == MSG_CANNOTOPEN){
-                     JOptionPane.showMessageDialog(null, "·Î±×¿ÂµÈ »ç¿ëÀÚ°¡ ¾Æ´Õ´Ï´Ù.", "´ëÈ­¹æÀÔÀå", 
-                  			JOptionPane.WARNING_MESSAGE);
-                  }   
-                  break;
-               }
-
-               // ´ëÈ­¹æ¿¡ Âü¿©ÇÑ »ç¿ëÀÚ ¸®½ºÆ®¸¦ ¾÷±×·¹ÀÌµå ÇÑ´Ù.
-               // PACKET : MDY_USERIDS|id1'id2'id3.....
-               case MDY_USERIDS:{
-                  room.rMember.clear(); // ¸ğµç ID¸¦ »èÁ¦ÇÑ´Ù.
-                  String ids = st.nextToken(); // ´ëÈ­¹æ Âü¿©ÀÚ ¸®½ºÆ®
-                  StringTokenizer roomusers = new StringTokenizer(ids, DELIMETER);
-                  while(roomusers.hasMoreTokens()){
-                	  room.rMember.add(roomusers.nextToken());
-                  }
-                  room.dr_lstMember.setListData(room.rMember);
-                  break;
-               }
-
-               // ¼ö½Å ¸Ş½ÃÁö Ãâ·Â  PACKET : YES_SENDWORDS|ID|´ëÈ­¸»
-               case YES_SENDWORDS:{
-                  String id = st.nextToken(); // ´ëÈ­¸» Àü¼ÛÀÚÀÇ ID¸¦ ±¸ÇÑ´Ù.
-                  try{
-                     String data = st.nextToken();
-                     room.dr_taContents.append(id+" : "+data+"\n");
-                  }catch(NoSuchElementException e){}
-                  room.dr_tfInput.setText(""); // ´ëÈ­¸» ÀÔ·Â ÇÊµå¸¦ Áö¿î´Ù.
-                  break;
-               }
-
-               // LOGOUT ¸Ş½ÃÁö Ã³¸® 
-               // PACKET : YES_LOGOUT|Å»ÅğÀÚid|Å»ÅğÀÚ Á¦¿Ü id1, id2,....
-               case YES_LOGOUT:{
-
-                  break;
-               }
-
-               // Åğ½Ç ¸Ş½ÃÁö(YES_QUITROOM) Ã³¸® PACKET : YES_QUITROOM
-               case YES_QUITROOM:{
-
-                  break;
-               }
-
-            } // switch Á¾·á
-
-            Thread.sleep(200);
-
-         } // while Á¾·á(½º·¹µå Á¾·á)
-
-
-      }catch(InterruptedException e){
-         System.out.println(e);
-         release();
-
-      }catch(IOException e){
-         System.out.println(e);
-         release();
-      }
-   }
-
-   // ³×Æ®¿öÅ© ÀÚ¿øÀ» ÇØÁ¦ÇÑ´Ù.
-   public void release(){ };
-
-   // Logon ÆĞÅ¶(REQ_LOGON|ID)À» »ı¼ºÇÏ°í Àü¼ÛÇÑ´Ù.
-   public void requestLogon(String id) {
-      try{
-         //logonbox = new MessageBox(ct_client, "·Î±×¿Â", "¼­¹ö¿¡ ·Î±×¿Â ÁßÀÔ´Ï´Ù.");
-         //logonbox.setVisible(true);
-         ct_buffer.setLength(0);   // Logon ÆĞÅ¶À» »ı¼ºÇÑ´Ù.
-         ct_buffer.append(REQ_LOGON);
-         ct_buffer.append(SEPARATOR);
-         ct_buffer.append(id);
-         send(ct_buffer.toString());   // Logon ÆĞÅ¶À» Àü¼ÛÇÑ´Ù.
-      }catch(IOException e){
-         System.out.println(e);
-      }
-   }
-
-   // EnterRoom ÆĞÅ¶(REQ_ENTERROOM|ID)À» »ı¼ºÇÏ°í Àü¼ÛÇÑ´Ù.
-   public void requestEnterRoom(String id) {
-      try{
-         ct_buffer.setLength(0);   // EnterRoom ÆĞÅ¶À» »ı¼ºÇÑ´Ù.
-         ct_buffer.append(REQ_ENTERROOM);
-         ct_buffer.append(SEPARATOR);
-         ct_buffer.append(id);
-         send(ct_buffer.toString());   // EnterRoom ÆĞÅ¶À» Àü¼ÛÇÑ´Ù.
-      }catch(IOException e){
-         System.out.println(e);
-      }
-   }
-
-   // SendWords ÆĞÅ¶(REQ_SENDWORDS|ID|´ëÈ­¸»)À» »ı¼ºÇÏ°í Àü¼ÛÇÑ´Ù.
-   public void requestSendWords(String words) {
-      try{
-         ct_buffer.setLength(0);   // SendWords ÆĞÅ¶À» »ı¼ºÇÑ´Ù.
-         ct_buffer.append(REQ_SENDWORDS);
-         ct_buffer.append(SEPARATOR);
-         ct_buffer.append(ct_client.msg_logon);
-         ct_buffer.append(SEPARATOR);
-         ct_buffer.append(words);
-         send(ct_buffer.toString());   // SendWords ÆĞÅ¶À» Àü¼ÛÇÑ´Ù.
-      }catch(IOException e){
-         System.out.println(e);
-      }
-   }
-
-   // Å¬¶óÀÌ¾ğÆ®¿¡¼­ ¸Ş½ÃÁö¸¦ Àü¼ÛÇÑ´Ù.
-   private void send(String sendData) throws IOException {
-      ct_out.writeUTF(sendData);
-      ct_out.flush();
-   }
-}
+////JSONí˜•ì‹ì„ ì‚¬ìš©í•´ì„œ í•´ë³´ì„¸ìš”...(ì˜µì…˜)
+//package example10;
+//
+//import java.io.*;
+//import java.util.*;
+//
+//import javax.swing.JOptionPane;
+//
+//import java.net.*;
+//
+//public class ClientThread extends Thread
+//{
+//
+//   private ChatClient  ct_client; // ChatClient ê°ì²´
+//   private Socket ct_sock; // í´ë¼ì´ì–¸íŠ¸ ì†Œì¼“
+//   private DataInputStream ct_in; // ì…ë ¥ ìŠ¤íŠ¸ë¦¼
+//   private DataOutputStream ct_out; // ì¶œë ¥ ìŠ¤íŠ¸ë¦¼
+//   private StringBuffer ct_buffer; // ë²„í¼
+//   private Thread thisThread;
+//   private DisplayRoom room;
+//
+//   private static final String SEPARATOR = "|";
+//   private static final String DELIMETER = "`";
+//
+//   // ë©”ì‹œì§€ íŒ¨í‚· ì½”ë“œ ë° ë°ì´í„° ì •ì˜
+//
+//   // ì„œë²„ì— ì „ì†¡í•˜ëŠ” ë©”ì‹œì§€ ì½”ë“œ
+//   private static final int REQ_LOGON = 1001;
+//   private static final int REQ_ENTERROOM = 1011;
+//   private static final int REQ_SENDWORDS = 1021;
+//   private static final int REQ_LOGOUT = 1031;
+//   private static final int REQ_QUITROOM = 1041;
+//
+//   // ì„œë²„ë¡œë¶€í„° ì „ì†¡ë˜ëŠ” ë©”ì‹œì§€ ì½”ë“œ
+//   private static final int YES_LOGON = 2001;
+//   private static final int NO_LOGON = 2002;
+//   private static final int YES_ENTERROOM = 2011;
+//   private static final int NO_ENTERROOM = 2012;
+//   private static final int MDY_USERIDS = 2013;
+//   private static final int YES_SENDWORDS = 2021;
+//   private static final int NO_SENDWORDS = 2022;
+//   private static final int YES_LOGOUT = 2031;
+//   private static final int NO_LOGOUT = 2032;
+//   private static final int YES_QUITROOM = 2041;
+//
+//   // ì—ëŸ¬ ë©”ì‹œì§€ ì½”ë“œ
+//   private static final int MSG_ALREADYUSER = 3001;
+//   private static final int MSG_SERVERFULL = 3002;
+//   private static final int MSG_CANNOTOPEN = 3011;
+//
+//   //private static MessageBox logonbox;
+//
+//   // ë¡œì»¬í˜¸ìŠ¤íŠ¸ì—ì„œ ì‚¬ìš©í•˜ê¸° ìœ„í•˜ì—¬ ë§Œë“  ìƒì„±ì
+//   // ì„œë²„ì™€ í´ë¼ì´ì–¸íŠ¸ê°€ ê°™ì€ ì‹œìŠ¤í…œì„ ì‚¬ìš©í•œë‹¤.
+//   public ClientThread(ChatClient client) {
+//      try{
+//         ct_sock = new Socket(InetAddress.getLocalHost(), 2777);
+//         ct_in = new DataInputStream(ct_sock.getInputStream());
+//         ct_out = new DataOutputStream(ct_sock.getOutputStream());
+//         ct_buffer = new StringBuffer(4096);
+//         thisThread = this;
+//         ct_client = client; // ê°ì²´ë³€ìˆ˜ì— í• ë‹¹
+//      }catch(IOException e){
+//         JOptionPane.showMessageDialog(null, "ì„œë²„ì— ì ‘ì†í•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤.", "ì—°ê²°ì—ëŸ¬",
+//                 JOptionPane.WARNING_MESSAGE);
+//      }
+//   }
+//
+//   public ClientThread(example10.ChatClient client) {
+//   }
+//
+//   public void run(){
+//
+//      try{
+//         Thread currThread = Thread.currentThread();
+//         while(currThread == thisThread){ // ì¢…ë£ŒëŠ” LOG_OFFì—ì„œ thisThread=null;ì— ì˜í•˜ì—¬
+//            String recvData = ct_in.readUTF();
+//            StringTokenizer st = new StringTokenizer(recvData, SEPARATOR);
+//            int command = Integer.parseInt(st.nextToken());
+//            switch(command){
+//
+//               // ë¡œê·¸ì˜¨ ì„±ê³µ ë©”ì‹œì§€  PACKET : YES_LOGON|ê°œì„¤ì‹œê°|ID1`ID2`ID3...
+//               case YES_LOGON:{
+//                  //logonbox.dispose();
+//                  ct_client.cc_tfStatus.setText("ë¡œê·¸ì˜¨ì´ ì„±ê³µí–ˆìŠµë‹ˆë‹¤.");
+//                  String date = st.nextToken(); // ëŒ€í™”ë°© ê°œì„¤ì‹œê°„ -> ë¡œê·¸ì˜¨ ì‹œê°ìœ¼ë¡œ ë³€ê²½
+//                  ct_client.cc_tfDate.setText(date);
+//                  String ids = st.nextToken(); // ëŒ€í™”ë°© ëŒ€ê¸°ì ë¦¬ìŠ¤íŠ¸
+//                  StringTokenizer users = new StringTokenizer(ids, DELIMETER);
+//                  while(users.hasMoreTokens()){
+//                     ct_client.lMember.add(users.nextToken());
+//                  }
+//                  ct_client.cc_lstMember.setListData(ct_client.lMember);
+////                  cc_tfLogon.setEditable(false);
+//                  break;
+//               }
+//
+//               // ë¡œê·¸ì˜¨ ì‹¤íŒ¨ ë˜ëŠ” ë¡œê·¸ì˜¨í•˜ê³  ëŒ€í™”ë°©ì´ ê°œì„¤ë˜ì§€ ì•Šì€ ìƒíƒœ
+//               // PACKET : NO_LOGON|errCode
+//               case NO_LOGON:{
+//                  int errcode = Integer.parseInt(st.nextToken());
+//                  if(errcode == MSG_ALREADYUSER){
+//                     //logonbox.dispose();
+//                     JOptionPane.showMessageDialog(null, "ì´ë¯¸ ë‹¤ë¥¸ ì‚¬ìš©ìê°€ ìˆìŠµë‹ˆë‹¤.", "ë¡œê·¸ì˜¨",
+//                             JOptionPane.WARNING_MESSAGE);
+//                  }else if(errcode == MSG_SERVERFULL){
+//                     //logonbox.dispose();
+//                     JOptionPane.showMessageDialog(null, "ëŒ€í™”ë°©ì´ ë§Œì›ì…ë‹ˆë‹¤.", "ë¡œê·¸ì˜¨",
+//                             JOptionPane.WARNING_MESSAGE);
+//                  }
+//                  break;
+//               }
+//
+//               // ëŒ€í™”ë°© ê°œì„¤ ë° ì…ì¥ ì„±ê³µ ë©”ì‹œì§€  PACKET : YES_ENTERROOM
+//               case YES_ENTERROOM:{
+//                  ct_client.dispose(); // ë¡œê·¸ì˜¨ ì°½ì„ ì§€ìš´ë‹¤.
+//                  room = new DisplayRoom(this, "ëŒ€í™”ë°©");
+//                  room.pack();
+//                  room.setVisible(true); // ëŒ€í™”ë°© ì°½ì„ ì¶œë ¥í•œë‹¤.
+//                  break;
+//               }
+//
+//               // ëŒ€í™”ë°© ê°œì„¤ ë° ì…ì¥ ì‹¤íŒ¨ ë©”ì‹œì§€  PACKET : NO_ENTERROOM|errCode
+//               case NO_ENTERROOM:{
+//                  int roomerrcode = Integer.parseInt(st.nextToken());
+//                  if(roomerrcode == MSG_CANNOTOPEN){
+//                     JOptionPane.showMessageDialog(null, "ë¡œê·¸ì˜¨ëœ ì‚¬ìš©ìê°€ ì•„ë‹™ë‹ˆë‹¤.", "ëŒ€í™”ë°©ì…ì¥",
+//                             JOptionPane.WARNING_MESSAGE);
+//                  }
+//                  break;
+//               }
+//
+//               // ëŒ€í™”ë°©ì— ì°¸ì—¬í•œ ì‚¬ìš©ì ë¦¬ìŠ¤íŠ¸ë¥¼ ì—…ê·¸ë ˆì´ë“œ í•œë‹¤.
+//               // PACKET : MDY_USERIDS|id1'id2'id3.....
+//               case MDY_USERIDS:{
+//                  room.rMember.clear(); // ëª¨ë“  IDë¥¼ ì‚­ì œí•œë‹¤.
+//                  String ids = st.nextToken(); // ëŒ€í™”ë°© ì°¸ì—¬ì ë¦¬ìŠ¤íŠ¸
+//                  StringTokenizer roomusers = new StringTokenizer(ids, DELIMETER);
+//                  while(roomusers.hasMoreTokens()){
+//                     room.rMember.add(roomusers.nextToken());
+//                  }
+//                  room.dr_lstMember.setListData(room.rMember);
+//                  break;
+//               }
+//
+//               // ìˆ˜ì‹  ë©”ì‹œì§€ ì¶œë ¥  PACKET : YES_SENDWORDS|ID|ëŒ€í™”ë§
+//               case YES_SENDWORDS:{
+//                  String id = st.nextToken(); // ëŒ€í™”ë§ ì „ì†¡ìì˜ IDë¥¼ êµ¬í•œë‹¤.
+//                  try{
+//                     String data = st.nextToken();
+//                     room.dr_taContents.append(id+" : "+data+"\n");
+//                  }catch(NoSuchElementException e){}
+//                  room.dr_tfInput.setText(""); // ëŒ€í™”ë§ ì…ë ¥ í•„ë“œë¥¼ ì§€ìš´ë‹¤.
+//                  break;
+//               }
+//
+//               // LOGOUT ë©”ì‹œì§€ ì²˜ë¦¬
+//               // PACKET : YES_LOGOUT|íƒˆí‡´ìid|íƒˆí‡´ì ì œì™¸ id1, id2,....
+//               case YES_LOGOUT:{
+//
+//                  break;
+//               }
+//
+//               // í‡´ì‹¤ ë©”ì‹œì§€(YES_QUITROOM) ì²˜ë¦¬ PACKET : YES_QUITROOM
+//               case YES_QUITROOM:{
+//
+//                  break;
+//               }
+//
+//            } // switch ì¢…ë£Œ
+//
+//            Thread.sleep(200);
+//
+//         } // while ì¢…ë£Œ(ìŠ¤ë ˆë“œ ì¢…ë£Œ)
+//
+//
+//      }catch(InterruptedException e){
+//         System.out.println(e);
+//         release();
+//
+//      }catch(IOException e){
+//         System.out.println(e);
+//         release();
+//      }
+//   }
+//
+//   // ë„¤íŠ¸ì›Œí¬ ìì›ì„ í•´ì œí•œë‹¤.
+//   public void release(){ };
+//
+//   // Logon íŒ¨í‚·(REQ_LOGON|ID)ì„ ìƒì„±í•˜ê³  ì „ì†¡í•œë‹¤.
+//   public void requestLogon(String id) {
+//      try{
+//         //logonbox = new MessageBox(ct_client, "ë¡œê·¸ì˜¨", "ì„œë²„ì— ë¡œê·¸ì˜¨ ì¤‘ì…ë‹ˆë‹¤.");
+//         //logonbox.setVisible(true);
+//         ct_buffer.setLength(0);   // Logon íŒ¨í‚·ì„ ìƒì„±í•œë‹¤.
+//         ct_buffer.append(REQ_LOGON);
+//         ct_buffer.append(SEPARATOR);
+//         ct_buffer.append(id);
+//         send(ct_buffer.toString());   // Logon íŒ¨í‚·ì„ ì „ì†¡í•œë‹¤.
+//      }catch(IOException e){
+//         System.out.println(e);
+//      }
+//   }
+//
+//   // EnterRoom íŒ¨í‚·(REQ_ENTERROOM|ID)ì„ ìƒì„±í•˜ê³  ì „ì†¡í•œë‹¤.
+//   public void requestEnterRoom(String id) {
+//      try{
+//         ct_buffer.setLength(0);   // EnterRoom íŒ¨í‚·ì„ ìƒì„±í•œë‹¤.
+//         ct_buffer.append(REQ_ENTERROOM);
+//         ct_buffer.append(SEPARATOR);
+//         ct_buffer.append(id);
+//         send(ct_buffer.toString());   // EnterRoom íŒ¨í‚·ì„ ì „ì†¡í•œë‹¤.
+//      }catch(IOException e){
+//         System.out.println(e);
+//      }
+//   }
+//
+//   // SendWords íŒ¨í‚·(REQ_SENDWORDS|ID|ëŒ€í™”ë§)ì„ ìƒì„±í•˜ê³  ì „ì†¡í•œë‹¤.
+//   public void requestSendWords(String words) {
+//      try{
+//         ct_buffer.setLength(0);   // SendWords íŒ¨í‚·ì„ ìƒì„±í•œë‹¤.
+//         ct_buffer.append(REQ_SENDWORDS);
+//         ct_buffer.append(SEPARATOR);
+//         ct_buffer.append(ct_client.msg_logon);
+//         ct_buffer.append(SEPARATOR);
+//         ct_buffer.append(words);
+//         send(ct_buffer.toString());   // SendWords íŒ¨í‚·ì„ ì „ì†¡í•œë‹¤.
+//      }catch(IOException e){
+//         System.out.println(e);
+//      }
+//   }
+//
+//   // í´ë¼ì´ì–¸íŠ¸ì—ì„œ ë©”ì‹œì§€ë¥¼ ì „ì†¡í•œë‹¤.
+//   private void send(String sendData) throws IOException {
+//      ct_out.writeUTF(sendData);
+//      ct_out.flush();
+//   }
+//}

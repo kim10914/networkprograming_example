@@ -1,144 +1,145 @@
-package SimpleChat;
-
-import java.awt.*;
-import java.awt.event.*;
-import java.util.Vector;
-
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JTextField;
-import javax.swing.JList;
-import javax.swing.JOptionPane;
-
-public class ChatClient extends JFrame implements ActionListener
-{
-   
-   private JTextField cc_tfLogon; // ·Î±×¿Â ÀÔ·Â ÅØ½ºÆ® ÇÊµå
-   private JButton cc_btLogon; // ·Î±×¿Â ½ÇÇà ¹öÆ°
-   private JButton cc_btEnter; // ´ëÈ­¹æ °³¼³ ¹× ÀÔÀå ¹öÆ°
-   private JButton cc_btLogout; // ·Î±×¾Æ¿ô ¹öÆ°
-
-   public JTextField cc_tfStatus; // ·Î±×¿Â °³¼³ ¾È³»
-   public JTextField cc_tfDate; // °³¼³½Ã°¢
-   public JList<String> cc_lstMember = new JList<String>(); // ´ëÈ­¹æ Âü°¡ÀÚ
-   public Vector<String> lMember = new Vector<String>();
-
-
-   public static ClientThread cc_thread;
-
-   public String msg_logon="";
-
-   public ChatClient(String str){
-      super(str);
-
-      // ·Î±×¿Â, ´ëÈ­¹æ °³¼³ ¹× ÀÔÀå ¹öÆ°À» ¼³Á¤ÇÑ´Ù.
-      JPanel bt_JPanel = new JPanel();
-      cc_btLogon = new JButton("·Î±×¿Â½ÇÇà");
-      cc_btLogon.addActionListener(this);
-      bt_JPanel.add(cc_btLogon);
-      
-      cc_tfLogon = new JTextField(10);
-      bt_JPanel.add(cc_tfLogon);
-      
-      cc_btEnter = new JButton("´ëÈ­¹æÀÔÀå");
-      cc_btEnter.addActionListener(this);
-      bt_JPanel.add(cc_btEnter);
-      
-      cc_btLogout = new JButton("·Î±×¾Æ¿ô");
-      cc_btLogout.addActionListener(this);
-      bt_JPanel.add(cc_btLogout);
-      add("Center", bt_JPanel);
-
-      // 4°³ÀÇ JPanel °´Ã¼¸¦ »ç¿ëÇÏ¿© ´ëÈ­¹æ Á¤º¸¸¦ Ãâ·ÂÇÑ´Ù.
-      JPanel roomPanel = new JPanel(); // 3°³ÀÇ ÆĞ³ÎÀ» ´ãÀ» ÆĞ³Î°´Ã¼
-      roomPanel.setLayout(new BorderLayout());
-
-      JPanel northPanel = new JPanel();
-      cc_tfStatus = new JTextField("ÇÏ´ÜÀÇ ÅØ½ºÆ® ÇÊµå¿¡  ID¸¦ ÀÔ·ÂÇÏ½Ê½Ã¿À,",43); 
-      													// ´ëÈ­¹æÀÇ °³¼³»óÅÂ ¾Ë¸²
-      cc_tfStatus.setEditable(false);
-      northPanel.add(cc_tfStatus);
-      
-      JPanel centerPanel = new JPanel();
-      centerPanel.add(new JLabel("·Î±×¿Â ½Ã°¢ : "),BorderLayout.WEST);
-      cc_tfDate = new JTextField("·Î±×¿Â ½Ã°¢ÀÌ Ç¥½ÃµË´Ï´Ù.");
-      cc_tfDate.setEditable(false);
-      centerPanel.add(cc_tfDate);
-
-      JPanel southPanel = new JPanel();
-      southPanel.add(new JLabel("·Î±×¿Â »ç¿ëÀÚ"));
-      cc_lstMember = new JList<String>();
-      JScrollPane sp = new JScrollPane(cc_lstMember);
-      sp.setPreferredSize(new Dimension(100,100));
-      southPanel.add(sp);
-
-      roomPanel.add("North", northPanel);
-      roomPanel.add("Center", centerPanel);
-      roomPanel.add("South", southPanel);
-      add("North", roomPanel);
-
-      // ·Î±×¿Â ÅØ½ºÆ® ÇÊµå¿¡ Æ÷Ä¿½º¸¦ ¸ÂÃß´Â ¸Ş¼Òµå Ãß°¡
-
-      addWindowListener(new WinListener());
-   }
-
-   class WinListener extends WindowAdapter
-   {
-      public void windowClosing(WindowEvent we){
-
-         System.exit(0); // ³ªÁß¿¡ ·Î±×¾Æ¿ô·çÆ¾À¸·Î º¯°æ
-      }
-   }
-
-   // ·Î±×¿Â, ´ëÈ­¹æ °³¼³ ¹× ÀÔÀå ¹öÆ° ´­¸² ÀÌº¥Æ®¸¦ Ã³¸®ÇÑ´Ù.
-   public void actionPerformed(ActionEvent ae){
-      //JButton b = (JButton)ae.getSource();
-	   String cmd = ae.getActionCommand();
-      if(cmd.equals("·Î±×¿Â½ÇÇà")){
-
-         // ·Î±×¿Â Ã³¸® ·çÆ¾
-         msg_logon = cc_tfLogon.getText(); // ·Î±×¿Â ID¸¦ ÀĞ´Â´Ù.
-         if(!msg_logon.equals("")){
-            cc_thread.requestLogon(msg_logon); // ClientThreadÀÇ ¸Ş¼Òµå¸¦ È£Ãâ
-         }else{
-         	JOptionPane.showMessageDialog(null, "·Î±×¿Â id¸¦ ÀÔ·ÂÇÏ¼¼¿ä.", "·Î±×¿Â", 
-        			JOptionPane.WARNING_MESSAGE); 
-         }
-      }else if(cmd.equals("´ëÈ­¹æÀÔÀå")){
-
-         // ´ëÈ­¹æ °³¼³ ¹× ÀÔÀå Ã³¸® ·çÆ¾
-         msg_logon = cc_tfLogon.getText(); // ·Î±×¿Â ID¸¦ ÀĞ´Â´Ù.
-         if(!msg_logon.equals("")){
-            cc_thread.requestEnterRoom(msg_logon); // ClientThreadÀÇ ¸Ş¼Òµå¸¦ È£Ãâ
-         }else{
-      		  JOptionPane.showMessageDialog(null, "·Î±×¿ÂÀ» ¸ÕÀú ÇÏ½Ê½Ã¿À.", "·Î±×¿Â", 
-            			JOptionPane.WARNING_MESSAGE); 
-         }
-
-      }else if(cmd.equals("·Î±×¾Æ¿ô")){
-
-      // ·Î±×¾Æ¿ô Ã³¸® ·çÆ¾
-      // To Do
-
-      }
-   }
-
-   public static void main(String args[]){
-      ChatClient client = new ChatClient("´ëÈ­¹æ °³¼³ ¹× ÀÔÀå");
-      client.pack();
-      client.setVisible(true);
-
-      // ¼ÒÄÏÀ» »ı¼ºÇÏ°í ¼­¹ö¿Í Åë½ÅÇÒ ½º·¹µå¸¦ È£ÃâÇÑ´Ù.
-      
-      // ¼­¹ö¿Í Å¬¶óÀÌ¾ğÆ®¸¦ ´Ù¸¥ ½Ã½ºÅÛÀ¸·Î »ç¿ëÇÏ´Â °æ¿ì
-      // ½ÇÇà : java ChatClient [È£½ºÆ®ÀÌ¸§°ú Æ÷Æ®¹øÈ£°¡ ÇÊ¿äÇÏ´Ù.]
-      // To Do
-            
-       cc_thread = new ClientThread(client); // ·ÎÄÃ È£½ºÆ®¿ë »ı¼ºÀÚ
-       cc_thread.start(); // Å¬¶óÀÌ¾ğÆ®ÀÇ ½º·¹µå¸¦ ½ÃÀÛÇÑ´Ù.
-      
-   }
-}
+//package example10;
+//
+//import java.awt.*;
+//import java.awt.event.*;
+//import java.util.Vector;
+//
+//import javax.swing.JFrame;
+//import javax.swing.JPanel;
+//import javax.swing.JScrollPane;
+//import javax.swing.JButton;
+//import javax.swing.JLabel;
+//import javax.swing.JTextField;
+//import javax.swing.JList;
+//import javax.swing.JOptionPane;
+//
+//public class ChatClient extends JFrame implements ActionListener
+//{
+//
+//   private JTextField cc_tfLogon; // ë¡œê·¸ì˜¨ ì…ë ¥ í…ìŠ¤íŠ¸ í•„ë“œ
+//   private JButton cc_btLogon; // ë¡œê·¸ì˜¨ ì‹¤í–‰ ë²„íŠ¼
+//   private JButton cc_btEnter; // ëŒ€í™”ë°© ê°œì„¤ ë° ì…ì¥ ë²„íŠ¼
+//   private JButton cc_btLogout; // ë¡œê·¸ì•„ì›ƒ ë²„íŠ¼
+//
+//   public JTextField cc_tfStatus; // ë¡œê·¸ì˜¨ ê°œì„¤ ì•ˆë‚´
+//   public JTextField cc_tfDate; // ê°œì„¤ì‹œê°
+//   public JList<String> cc_lstMember = new JList<String>(); // ëŒ€í™”ë°© ì°¸ê°€ì
+//   public Vector<String> lMember = new Vector<String>(); // ë™ê¸°í™”ê°€ ë³´ì¥ëœ ë™ì ë°°ì—´
+//
+//
+//   public static ClientThread cc_thread;
+//
+//   public String msg_logon="";
+//
+//   // GUI í´ë˜ìŠ¤
+//   public ChatClient(String str){
+//      super(str);
+//
+//      // ë¡œê·¸ì˜¨, ëŒ€í™”ë°© ê°œì„¤ ë° ì…ì¥ ë²„íŠ¼ì„ ì„¤ì •í•œë‹¤.
+//      JPanel bt_JPanel = new JPanel();
+//      cc_btLogon = new JButton("ë¡œê·¸ì˜¨ì‹¤í–‰");
+//      cc_btLogon.addActionListener(this);
+//      bt_JPanel.add(cc_btLogon);
+//
+//      cc_tfLogon = new JTextField(10);
+//      bt_JPanel.add(cc_tfLogon);
+//
+//      cc_btEnter = new JButton("ëŒ€í™”ë°©ì…ì¥");
+//      cc_btEnter.addActionListener(this);
+//      bt_JPanel.add(cc_btEnter);
+//
+//      cc_btLogout = new JButton("ë¡œê·¸ì•„ì›ƒ");
+//      cc_btLogout.addActionListener(this);
+//      bt_JPanel.add(cc_btLogout);
+//      add("Center", bt_JPanel);
+//
+//      // 4ê°œì˜ JPanel ê°ì²´ë¥¼ ì‚¬ìš©í•˜ì—¬ ëŒ€í™”ë°© ì •ë³´ë¥¼ ì¶œë ¥í•œë‹¤.
+//      JPanel roomPanel = new JPanel(); // 3ê°œì˜ íŒ¨ë„ì„ ë‹´ì„ íŒ¨ë„ê°ì²´
+//      roomPanel.setLayout(new BorderLayout());
+//
+//      JPanel northPanel = new JPanel();
+//      cc_tfStatus = new JTextField("í•˜ë‹¨ì˜ í…ìŠ¤íŠ¸ í•„ë“œì—  IDë¥¼ ì…ë ¥í•˜ì‹­ì‹œì˜¤,",43);
+//      // ëŒ€í™”ë°©ì˜ ê°œì„¤ìƒíƒœ ì•Œë¦¼
+//      cc_tfStatus.setEditable(false);
+//      northPanel.add(cc_tfStatus);
+//
+//      JPanel centerPanel = new JPanel();
+//      centerPanel.add(new JLabel("ë¡œê·¸ì˜¨ ì‹œê° : "),BorderLayout.WEST);
+//      cc_tfDate = new JTextField("ë¡œê·¸ì˜¨ ì‹œê°ì´ í‘œì‹œë©ë‹ˆë‹¤.");
+//      cc_tfDate.setEditable(false);
+//      centerPanel.add(cc_tfDate);
+//
+//      JPanel southPanel = new JPanel();
+//      southPanel.add(new JLabel("ë¡œê·¸ì˜¨ ì‚¬ìš©ì"));
+//      cc_lstMember = new JList<String>();
+//      JScrollPane sp = new JScrollPane(cc_lstMember);
+//      sp.setPreferredSize(new Dimension(100,100));
+//      southPanel.add(sp);
+//
+//      roomPanel.add("North", northPanel);
+//      roomPanel.add("Center", centerPanel);
+//      roomPanel.add("South", southPanel);
+//      add("North", roomPanel);
+//
+//      // ë¡œê·¸ì˜¨ í…ìŠ¤íŠ¸ í•„ë“œì— í¬ì»¤ìŠ¤ë¥¼ ë§ì¶”ëŠ” ë©”ì†Œë“œ ì¶”ê°€
+//
+//      addWindowListener(new WinListener());
+//   }
+//
+//   class WinListener extends WindowAdapter
+//   {
+//      public void windowClosing(WindowEvent we){
+//
+//         System.exit(0); // ë‚˜ì¤‘ì— ë¡œê·¸ì•„ì›ƒë£¨í‹´ìœ¼ë¡œ ë³€ê²½
+//      }
+//   }
+//
+//   // ë¡œê·¸ì˜¨, ëŒ€í™”ë°© ê°œì„¤ ë° ì…ì¥ ë²„íŠ¼ ëˆŒë¦¼ ì´ë²¤íŠ¸ë¥¼ ì²˜ë¦¬í•œë‹¤.
+//   public void actionPerformed(ActionEvent ae){
+//      //JButton b = (JButton)ae.getSource();
+//      String cmd = ae.getActionCommand();
+//      if(cmd.equals("ë¡œê·¸ì˜¨ì‹¤í–‰")){
+//
+//         // ë¡œê·¸ì˜¨ ì²˜ë¦¬ ë£¨í‹´
+//         msg_logon = cc_tfLogon.getText(); // ë¡œê·¸ì˜¨ IDë¥¼ ì½ëŠ”ë‹¤.
+//         if(!msg_logon.equals("")){
+//            cc_thread.requestLogon(msg_logon); // ClientThreadì˜ ë©”ì†Œë“œë¥¼ í˜¸ì¶œ
+//         }else{
+//            JOptionPane.showMessageDialog(null, "ë¡œê·¸ì˜¨ idë¥¼ ì…ë ¥í•˜ì„¸ìš”.", "ë¡œê·¸ì˜¨",
+//                    JOptionPane.WARNING_MESSAGE);
+//         }
+//      }else if(cmd.equals("ëŒ€í™”ë°©ì…ì¥")){
+//
+//         // ëŒ€í™”ë°© ê°œì„¤ ë° ì…ì¥ ì²˜ë¦¬ ë£¨í‹´
+//         msg_logon = cc_tfLogon.getText(); // ë¡œê·¸ì˜¨ IDë¥¼ ì½ëŠ”ë‹¤.
+//         if(!msg_logon.equals("")){
+//            cc_thread.requestEnterRoom(msg_logon); // ClientThreadì˜ ë©”ì†Œë“œë¥¼ í˜¸ì¶œ
+//         }else{
+//            JOptionPane.showMessageDialog(null, "ë¡œê·¸ì˜¨ì„ ë¨¼ì € í•˜ì‹­ì‹œì˜¤.", "ë¡œê·¸ì˜¨",
+//                    JOptionPane.WARNING_MESSAGE);
+//         }
+//
+//      }else if(cmd.equals("ë¡œê·¸ì•„ì›ƒ")){
+//
+//         // ë¡œê·¸ì•„ì›ƒ ì²˜ë¦¬ ë£¨í‹´
+//         // To Do
+//
+//      }
+//   }
+//
+//   public static void main(String args[]){
+//      ChatClient client = new ChatClient("ëŒ€í™”ë°© ê°œì„¤ ë° ì…ì¥");
+//      client.pack();
+//      client.setVisible(true);
+//
+//      // ì†Œì¼“ì„ ìƒì„±í•˜ê³  ì„œë²„ì™€ í†µì‹ í•  ìŠ¤ë ˆë“œë¥¼ í˜¸ì¶œí•œë‹¤.
+//
+//      // ì„œë²„ì™€ í´ë¼ì´ì–¸íŠ¸ë¥¼ ë‹¤ë¥¸ ì‹œìŠ¤í…œìœ¼ë¡œ ì‚¬ìš©í•˜ëŠ” ê²½ìš°
+//      // ì‹¤í–‰ : java ChatClient [í˜¸ìŠ¤íŠ¸ì´ë¦„ê³¼ í¬íŠ¸ë²ˆí˜¸ê°€ í•„ìš”í•˜ë‹¤.]
+//      // To Do
+//
+//      cc_thread = new ClientThread(client); // ë¡œì»¬ í˜¸ìŠ¤íŠ¸ìš© ìƒì„±ì
+//      cc_thread.start(); // í´ë¼ì´ì–¸íŠ¸ì˜ ìŠ¤ë ˆë“œë¥¼ ì‹œì‘í•œë‹¤.
+//
+//   }
+//}

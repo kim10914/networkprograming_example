@@ -1,94 +1,94 @@
-package SimpleChat;
-
-import java.awt.*;
-import java.awt.event.*;
-import java.util.Vector;
-import javax.swing.JFrame;
-import javax.swing.JButton;
-import javax.swing.JList;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-
-public class DisplayRoom extends JFrame implements ActionListener, KeyListener
-{
-   private JButton dr_btClear; // ´ëÈ­¸» Ã¢ È­¸é Áö¿ì±â
-   private JButton dr_btLogout; // ·Î±×¾Æ¿ô ½ÇÇà ¹öÆ°
-
-   public JTextArea dr_taContents; // ´ëÈ­¸» ³»¿ë ¸®½ºÆ®Ã¢
-   public JList<String> dr_lstMember; // ´ëÈ­¹æ Âü°¡ÀÚ
-   public Vector<String> rMember = new Vector<String>();
-
-   public JTextField dr_tfInput; // ´ëÈ­¸» ÀÔ·ÂÇÊµå
-
-   public static ClientThread dr_thread;
-
-   public DisplayRoom(ClientThread client, String title){
-      super(title);
-
-      // ´ëÈ­¹æ¿¡¼­ »ç¿ëÇÏ´Â ÄÄÆ÷³ÍÆ®¸¦ ¹èÄ¡ÇÑ´Ù.
-      Panel northpanel = new Panel();
-      dr_btClear = new JButton("È­¸éÁö¿ì±â"); 
-      dr_btClear.addActionListener(this);
-      northpanel.add(dr_btClear);
-   
-      dr_btLogout = new JButton("·Î±×¾Æ¿ô");
-      dr_btLogout.addActionListener(this);
-      northpanel.add(dr_btLogout);
-
-      Panel centerpanel = new Panel();
-      dr_taContents = new JTextArea(10, 27);
-      dr_taContents.setEditable(false);
-      centerpanel.add(dr_taContents);
-     
-      dr_lstMember = new JList<String>();
-      JScrollPane sp = new JScrollPane(dr_lstMember);
-      sp.setPreferredSize(new Dimension(100,180));
-      centerpanel.add(sp);
-
-      Panel southpanel = new Panel();
-      dr_tfInput = new JTextField(41);
-      dr_tfInput.addKeyListener(this);
-      southpanel.add(dr_tfInput);
-
-      add("North", northpanel);
-      add("Center", centerpanel);
-      add("South", southpanel);
-
-      dr_thread = client; // ClientThread Å¬·¡½º¿Í ¿¬°áÇÑ´Ù.
-
-      addWindowListener(new WinListener());
-
-   }
-
-   class WinListener extends WindowAdapter
-   {
-      public void windowClosing(WindowEvent we){
-         System.exit(0); // ·Î±×¾Æ¿ô ·çÆ¾À¸·Î ¹Ù²Û´Ù.
-      }
-   }
-
-   // È­¸éÁö¿ì±â, ·Î±×¾Æ¿ô ÀÌº¥Æ®¸¦ Ã³¸®ÇÑ´Ù.
-   public void actionPerformed(ActionEvent ae){
-      Button b = (Button)ae.getSource();
-      if(b.getLabel().equals("È­¸éÁö¿ì±â")){
-
-      // È­¸éÁö¿ì±â Ã³¸® ·çÆ¾
-
-      }else if(b.getLabel().equals("·Î±×¾Æ¿ô")){
-
-      // ·Î±×¾Æ¿ô Ã³¸® ·çÆ¾
-      }
-   }
-
-   // ÀÔ·ÂÇÊµå¿¡ ÀÔ·ÂÇÑ ´ëÈ­¸»À» ¼­¹ö¿¡ Àü¼ÛÇÑ´Ù.
-   public void keyPressed(KeyEvent ke){
-      if(ke.getKeyChar() == KeyEvent.VK_ENTER){
-         String words = dr_tfInput.getText(); // ´ëÈ­¸»À» ±¸ÇÑ´Ù.
-         dr_thread.requestSendWords(words); // ´ëÈ­¸»À» Âü¿©ÇÑ »ç¿ëÀÚ¿¡ Àü¼ÛÇÑ´Ù.
-      }
-   }
-   
-   public void keyReleased(KeyEvent ke){}
-   public void keyTyped(KeyEvent ke){}
-}
+//package example10;
+//
+//import java.awt.*;
+//import java.awt.event.*;
+//import java.util.Vector;
+//import javax.swing.JFrame;
+//import javax.swing.JButton;
+//import javax.swing.JList;
+//import javax.swing.JScrollPane;
+//import javax.swing.JTextArea;
+//import javax.swing.JTextField;
+//
+//public class DisplayRoom extends JFrame implements ActionListener, KeyListener
+//{
+//   private JButton dr_btClear; // ëŒ€í™”ë§ ì°½ í™”ë©´ ì§€ìš°ê¸°
+//   private JButton dr_btLogout; // ë¡œê·¸ì•„ì›ƒ ì‹¤í–‰ ë²„íŠ¼
+//
+//   public JTextArea dr_taContents; // ëŒ€í™”ë§ ë‚´ìš© ë¦¬ìŠ¤íŠ¸ì°½
+//   public JList<String> dr_lstMember; // ëŒ€í™”ë°© ì°¸ê°€ì
+//   public Vector<String> rMember = new Vector<String>();
+//
+//   public JTextField dr_tfInput; // ëŒ€í™”ë§ ì…ë ¥í•„ë“œ
+//
+//   public static ClientThread dr_thread;
+//
+//   public DisplayRoom(ClientThread client, String title){
+//      super(title);
+//
+//      // ëŒ€í™”ë°©ì—ì„œ ì‚¬ìš©í•˜ëŠ” ì»´í¬ë„ŒíŠ¸ë¥¼ ë°°ì¹˜í•œë‹¤.
+//      Panel northpanel = new Panel();
+//      dr_btClear = new JButton("í™”ë©´ì§€ìš°ê¸°");
+//      dr_btClear.addActionListener(this);
+//      northpanel.add(dr_btClear);
+//
+//      dr_btLogout = new JButton("ë¡œê·¸ì•„ì›ƒ");
+//      dr_btLogout.addActionListener(this);
+//      northpanel.add(dr_btLogout);
+//
+//      Panel centerpanel = new Panel();
+//      dr_taContents = new JTextArea(10, 27);
+//      dr_taContents.setEditable(false);
+//      centerpanel.add(dr_taContents);
+//
+//      dr_lstMember = new JList<String>();
+//      JScrollPane sp = new JScrollPane(dr_lstMember);
+//      sp.setPreferredSize(new Dimension(100,180));
+//      centerpanel.add(sp);
+//
+//      Panel southpanel = new Panel();
+//      dr_tfInput = new JTextField(41);
+//      dr_tfInput.addKeyListener(this);
+//      southpanel.add(dr_tfInput);
+//
+//      add("North", northpanel);
+//      add("Center", centerpanel);
+//      add("South", southpanel);
+//
+//      dr_thread = client; // ClientThread í´ë˜ìŠ¤ì™€ ì—°ê²°í•œë‹¤.
+//
+//      addWindowListener(new WinListener());
+//
+//   }
+//
+//   class WinListener extends WindowAdapter
+//   {
+//      public void windowClosing(WindowEvent we){
+//         System.exit(0); // ë¡œê·¸ì•„ì›ƒ ë£¨í‹´ìœ¼ë¡œ ë°”ê¾¼ë‹¤.
+//      }
+//   }
+//
+//   // í™”ë©´ì§€ìš°ê¸°, ë¡œê·¸ì•„ì›ƒ ì´ë²¤íŠ¸ë¥¼ ì²˜ë¦¬í•œë‹¤.
+//   public void actionPerformed(ActionEvent ae){
+//      Button b = (Button)ae.getSource();
+//      if(b.getLabel().equals("í™”ë©´ì§€ìš°ê¸°")){
+//
+//         // í™”ë©´ì§€ìš°ê¸° ì²˜ë¦¬ ë£¨í‹´
+//
+//      }else if(b.getLabel().equals("ë¡œê·¸ì•„ì›ƒ")){
+//
+//         // ë¡œê·¸ì•„ì›ƒ ì²˜ë¦¬ ë£¨í‹´
+//      }
+//   }
+//
+//   // ì…ë ¥í•„ë“œì— ì…ë ¥í•œ ëŒ€í™”ë§ì„ ì„œë²„ì— ì „ì†¡í•œë‹¤.
+//   public void keyPressed(KeyEvent ke){
+//      if(ke.getKeyChar() == KeyEvent.VK_ENTER){
+//         String words = dr_tfInput.getText(); // ëŒ€í™”ë§ì„ êµ¬í•œë‹¤.
+//         dr_thread.requestSendWords(words); // ëŒ€í™”ë§ì„ ì°¸ì—¬í•œ ì‚¬ìš©ìì— ì „ì†¡í•œë‹¤.
+//      }
+//   }
+//
+//   public void keyReleased(KeyEvent ke){}
+//   public void keyTyped(KeyEvent ke){}
+//}

@@ -130,7 +130,7 @@ public class hw_9_8 extends JFrame implements ActionListener, KeyListener {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }else if(ae.getSource() == logoutBtn){
+        }else if(source == logoutBtn){
             logoutAndRestart();
         }
     }

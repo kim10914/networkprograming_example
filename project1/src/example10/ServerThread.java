@@ -1,262 +1,263 @@
-package SimpleChat;
-
-import java.io.*;
-import java.net.*;
-import java.util.*;
-
-public class ServerThread extends Thread 
-{
-   private Socket st_sock;
-   private DataInputStream st_in;
-   private DataOutputStream st_out;
-   private StringBuffer st_buffer;
-   /* ·Î±×¿ÂµÈ »ç¿ëÀÚ ÀúÀå */
-   private static HashMap<String,ServerThread> logonHash; 
-   private static Vector<String> logonVector;
-   /* ´ëÈ­¹æ Âü¿©ÀÚ ÀúÀå */
-   private static HashMap<String,ServerThread> roomHash; 
-   private static Vector<String> roomVector;
-
-   private static int isOpenRoom = 0; // ´ëÈ­¹æÀÌ °³¼³¾ÈµÊ(ÃÊ±â°ª)
-
-   private static final String SEPARATOR = "|"; // ¸Ş½ÃÁö°£ ±¸ºĞÀÚ
-   private static final String DELIMETER = "`"; // ¼Ò¸Ş½ÃÁö°£ ±¸ºĞÀÚ
-   private static Date starttime;  	// ·Î±×¿Â ½Ã°¢
-
-   public String st_ID; 			// ID ÀúÀå
-
-   // ¸Ş½ÃÁö ÆĞÅ¶ ÄÚµå ¹× µ¥ÀÌÅÍ Á¤ÀÇ
-   // Å¬¶óÀÌ¾ğÆ®·ÎºÎÅÍ Àü´ŞµÇ´Â ¸Ş½ÃÁö ÄÚµå
-   private static final int REQ_LOGON = 1001;
-   private static final int REQ_ENTERROOM = 1011;
-   private static final int REQ_SENDWORDS = 1021;
-   private static final int REQ_LOGOUT = 1031;
-   private static final int REQ_QUITROOM = 1041;
-
-   // Å¬¶óÀÌ¾ğÆ®¿¡ Àü¼ÛÇÏ´Â ¸Ş½ÃÁö ÄÚµå
-   private static final int YES_LOGON = 2001;
-   private static final int NO_LOGON = 2002;
-   private static final int YES_ENTERROOM = 2011;
-   private static final int NO_ENTERROOM = 2012;
-   private static final int MDY_USERIDS = 2013;
-   private static final int YES_SENDWORDS = 2021;
-   private static final int NO_SENDWORDS = 2022;
-   private static final int YES_LOGOUT = 2031;
-   private static final int NO_LOGOUT = 2032;
-   private static final int YES_QUITROOM = 2041;
-
-   // ¿¡·¯ ¸Ş½ÃÁö ÄÚµå
-   private static final int MSG_ALREADYUSER = 3001;
-   private static final int MSG_SERVERFULL = 3002;
-   private static final int MSG_CANNOTOPEN = 3011;
-
-   static{	
-      logonHash = new HashMap<String,ServerThread>(ChatServer.cs_maxclient);
-      logonVector = new Vector<String>(ChatServer.cs_maxclient); 
-      roomHash = new HashMap<String,ServerThread>(ChatServer.cs_maxclient);
-      roomVector = new Vector<String>(ChatServer.cs_maxclient); 
-   }
-
-   public ServerThread(Socket sock){
-      try{
-         st_sock = sock;
-         st_in = new DataInputStream(sock.getInputStream()); 
-         st_out = new DataOutputStream(sock.getOutputStream());
-         st_buffer = new StringBuffer(2048);
-      }catch(IOException e){
-         System.out.println(e);
-      }
-   }
-
-   public void run(){
-      try{
-         while(true){
-            String recvData = st_in.readUTF();
-            StringTokenizer st = new StringTokenizer(recvData, SEPARATOR);
-            int command = Integer.parseInt(st.nextToken());
-            switch(command){
-
-               // ·Î±×¿Â ½Ãµµ ¸Ş½ÃÁö PACKET : REQ_LOGON|ID
-               case REQ_LOGON:{
-                  int result;
-                  String id = st.nextToken(); // Å¬¶óÀÌ¾ğÆ®ÀÇ ID¸¦ ¾ò´Â´Ù.
-                  result = addUser(id, this);
-                  st_buffer.setLength(0);
-                  if(result ==0){  // Á¢¼ÓÀ» Çã¿ëÇÑ »óÅÂ
-                     st_buffer.append(YES_LOGON); 
-                     					// YES_LOGON|°³¼³½Ã°¢|ID1`ID2`..
-                     st_buffer.append(SEPARATOR);
-                     st_buffer.append(starttime);
-                     st_buffer.append(SEPARATOR);
-                     String userIDs = getUsers(); //´ëÈ­¹æ Âü¿© »ç¿ëÀÚID¸¦ ±¸ÇÑ´Ù
-                     st_buffer.append(userIDs);
-                     send(st_buffer.toString());
-                  }else{  // Á¢¼ÓºÒ°¡ »óÅÂ
-                     st_buffer.append(NO_LOGON);  // NO_LOGON|errCode
-                     st_buffer.append(SEPARATOR);
-                     st_buffer.append(result); // Á¢¼ÓºÒ°¡ ¿øÀÎÄÚµå Àü¼Û
-                     send(st_buffer.toString());
-                  }
-                  break;
-               }
-
-               // ´ëÈ­¹æ °³¼³ ½Ãµµ ¸Ş½ÃÁö  PACKET : REQ_ENTERROOM|ID
-               case REQ_ENTERROOM:{
-                  st_buffer.setLength(0);
-                  String id = st.nextToken(); // Å¬¶óÀÌ¾ğÆ®ÀÇ ID¸¦ ¾ò´Â´Ù.
-                  if(checkUserID(id) == null){
-
-                  // NO_ENTERROOM PACKET : NO_ENTERROOM|errCode
-                     st_buffer.append(NO_ENTERROOM);
-                     st_buffer.append(SEPARATOR);
-                     st_buffer.append(MSG_CANNOTOPEN);
-                     send(st_buffer.toString());  // NO_ENTERROOM ÆĞÅ¶À» Àü¼ÛÇÑ´Ù.
-                     break;
-                  }
-
-                  roomVector.addElement(id);  // »ç¿ëÀÚ ID Ãß°¡
-                  roomHash.put(id, this); //»ç¿ëÀÚ ID ¹× Å¬¶óÀÌ¾ğÆ®¿Í Åë½ÅÇÒ  ½º·¹µå ÀúÀå
-
-                  if(isOpenRoom == 0){  // ´ëÈ­¹æ °³¼³½Ã°£ ¼³Á¤
-                     isOpenRoom = 1;
-                     starttime = new Date();
-                  }
-
-                  // YES_ENTERROOM PACKET : YES_ENTERROOM
-                  st_buffer.append(YES_ENTERROOM); 
-                  send(st_buffer.toString()); // YES_ENTERROOM ÆĞÅ¶À» Àü¼ÛÇÑ´Ù.
-
-                  //MDY_USERIDS PACKET : MDY_USERIDS|id1'id2' ....
-                  st_buffer.setLength(0);
-                  st_buffer.append(MDY_USERIDS);
-                  st_buffer.append(SEPARATOR);
-                  String userIDs = getRoomUsers(); // ´ëÈ­¹æ Âü¿© »ç¿ëÀÚ ID¸¦ ±¸ÇÑ´Ù
-                  st_buffer.append(userIDs);
-                  broadcast(st_buffer.toString()); // MDY_USERIDS ÆĞÅ¶À» Àü¼ÛÇÑ´Ù.
-                  break;
-               }
-
-               // ´ëÈ­¸» Àü¼Û ½Ãµµ ¸Ş½ÃÁö PACKET : REQ_SENDWORDS|ID|´ëÈ­¸»
-               case REQ_SENDWORDS:{
-                  st_buffer.setLength(0);
-                  st_buffer.append(YES_SENDWORDS);
-                  st_buffer.append(SEPARATOR);
-                  String id = st.nextToken(); // Àü¼ÛÇÑ »ç¿ëÀÚÀÇ ID¸¦ ±¸ÇÑ´Ù.
-                  st_buffer.append(id);
-                  st_buffer.append(SEPARATOR);
-                  try{
-                     String data = st.nextToken(); // ´ëÈ­¸»À» ±¸ÇÑ´Ù.
-                     st_buffer.append(data);
-                  }catch(NoSuchElementException e){}
-                  broadcast(st_buffer.toString()); // YES_SENDWORDS ÆĞÅ¶  Àü¼Û
-                  break;
-               }
-
-               // LOGOUT Àü¼Û ½Ãµµ ¸Ş½ÃÁö  
-               // PACKET : YES_LOGOUT|Å»ÅğÀÚID|Å»ÅğÀÚ ÀÌ¿ÜÀÇ ids
-               case REQ_LOGOUT:{
-
-                  break;
-               }
-
-               // ¹æ ÀÔÀåÀüÀÇ LOGOUT Àü¼Û ½Ãµµ ¸Ş½ÃÁö PACKET : YES_QUITROOM
-               case REQ_QUITROOM:{
-
-                  break;
-               }
-
-            } // switch Á¾·á
-
-            Thread.sleep(100);
-         } //while Á¾·á
-
-      }catch(NullPointerException e){ // ·Î±×¾Æ¿ô½Ã st_inÀÌ ÀÌ ¿¹¿Ü¸¦ ¹ß»ıÇÏ¹Ç·Î
-      }catch(InterruptedException e){
-      }catch(IOException e){
-      }
-   }
-
-   // ÀÚ¿øÀ» ÇØÁ¦ÇÑ´Ù.
-
-   public void release(){
-	   
-   }
-
-   /* ÇØ½¬ Å×ÀÌºí¿¡ Á¢¼ÓÀ» ¿äÃ»ÇÑ Å¬¶óÀÌ¾ğÆ®ÀÇ ID ¹× Àü¼ÛÀ» ´ã´çÇÏ´Â ½º·¹µå¸¦ µî·Ï.
-          Áï, ÇØ½¬ Å×ÀÌºíÀº ´ëÈ­¸¦ ÇÏ´Â Å¬¶óÀÌ¾ğÆ®ÀÇ ¸®½ºÆ®¸¦ Æ÷ÇÔ. */
-    private static synchronized int addUser(String id, ServerThread client){
-      if(checkUserID(id) != null){
-         return MSG_ALREADYUSER;
-      }  
-      if(logonHash.size() >= ChatServer.cs_maxclient){
-         return MSG_SERVERFULL;
-      }
-      logonVector.addElement(id);  // »ç¿ëÀÚ ID Ãß°¡
-      logonHash.put(id, client); // »ç¿ëÀÚ ID ¹× Å¬¶óÀÌ¾ğÆ®¿Í Åë½ÅÇÒ ½º·¹µå¸¦ ÀúÀåÇÑ´Ù.
-      client.st_ID = id;
-      return 0; // Å¬¶óÀÌ¾ğÆ®¿Í ¼º°øÀûÀ¸·Î Á¢¼ÓÇÏ°í, ´ëÈ­¹æÀÌ ÀÌ¹Ì °³¼³µÈ »óÅÂ.
-   }
-
-   /* Á¢¼ÓÀ» ¿äÃ»ÇÑ »ç¿ëÀÚÀÇ ID¿Í ÀÏÄ¡ÇÏ´Â ID°¡ ÀÌ¹Ì »ç¿ëµÇ´Â Áö¸¦ Á¶»çÇÑ´Ù.
-           ¹İÈ¯°ªÀÌ nullÀÌ¶ó¸é ¿ä±¸ÇÑ ID·Î ´ëÈ­¹æ ÀÔÀåÀÌ °¡´ÉÇÔ. */
-   private static ServerThread checkUserID(String id){
-      ServerThread alreadyClient = null;
-      alreadyClient = (ServerThread) logonHash.get(id);
-      return alreadyClient;
-   }
-
-   // ·Î±×¿Â¿¡ Âü¿©ÇÑ »ç¿ëÀÚ ID¸¦ ±¸ÇÑ´Ù.
-   private String getUsers(){
-      StringBuffer id = new StringBuffer();
-      String ids;
-      Enumeration<String> enu = logonVector.elements();
-      while(enu.hasMoreElements()){
-         id.append(enu.nextElement());
-         id.append(DELIMETER); 
-      }
-      try{
-         ids = new String(id);  // ¹®ÀÚ¿­·Î º¯È¯ÇÑ´Ù.
-         ids = ids.substring(0, ids.length()-1); // ¸¶Áö¸· "`"¸¦ »èÁ¦ÇÑ´Ù.
-      }catch(StringIndexOutOfBoundsException e){
-         return "";
-      }
-      return ids;
-   }
-
-   // ´ëÈ­¹æ¿¡ Âü¿©ÇÑ »ç¿ëÀÚ ID¸¦ ±¸ÇÑ´Ù.
-
-   private String getRoomUsers(){
-      StringBuffer id = new StringBuffer();
-      String ids;
-      Enumeration<String> enu = roomVector.elements();
-      while(enu.hasMoreElements()){
-         id.append(enu.nextElement());
-         id.append(DELIMETER); 
-      }
-      try{
-         ids = new String(id);
-         ids = ids.substring(0, ids.length()-1); // ¸¶Áö¸· "`"¸¦ »èÁ¦ÇÑ´Ù.
-      }catch(StringIndexOutOfBoundsException e){
-         return "";
-      }
-      return ids;
-   }
-
-   // ´ëÈ­¹æ¿¡ Âü¿©ÇÑ ¸ğµç »ç¿ëÀÚ(ºê·ÎµåÄÉ½ºÆÃ)¿¡°Ô µ¥ÀÌÅÍ¸¦ Àü¼ÛÇÑ´Ù.  
-   public synchronized void broadcast(String sendData) throws IOException{
-	   ServerThread client;
-	   Iterator<String> it = roomHash.keySet().iterator();
-	   while(it.hasNext()){
-		   client = roomHash.get(it.next());
-		   client.send(sendData);
-	   }
-   } 
-   
-   // µ¥ÀÌÅÍ¸¦ Àü¼ÛÇÑ´Ù.
-   public void send(String sendData) throws IOException{
-      synchronized(st_out){
-         st_out.writeUTF(sendData);
-         st_out.flush();
-      }
-   }
-}   
+//package example10;
+//
+//import java.io.*;
+//import java.net.*;
+//import java.util.*;
+//
+//public class ServerThread extends Thread
+//{
+//   private Socket st_sock;
+//   private DataInputStream st_in;
+//   private DataOutputStream st_out;
+//   private StringBuffer st_buffer;
+//   /* ë¡œê·¸ì˜¨ëœ ì‚¬ìš©ì ì €ì¥ */
+//   private static HashMap<String,ServerThread> logonHash;
+//   private static Vector<String> logonVector;
+//   /* ëŒ€í™”ë°© ì°¸ì—¬ì ì €ì¥ */
+//   private static HashMap<String,ServerThread> roomHash;
+//   private static Vector<String> roomVector;
+//
+//   private static int isOpenRoom = 0; // ëŒ€í™”ë°©ì´ ê°œì„¤ì•ˆë¨(ì´ˆê¸°ê°’)
+//
+//   private static final String SEPARATOR = "|"; // ë©”ì‹œì§€ê°„ êµ¬ë¶„ì
+//   private static final String DELIMETER = "`"; // ì†Œë©”ì‹œì§€ê°„ êµ¬ë¶„ì
+//   private static Date starttime;  	// ë¡œê·¸ì˜¨ ì‹œê°
+//
+//   public String st_ID; 			// ID ì €ì¥
+//
+//   // ë©”ì‹œì§€ íŒ¨í‚· ì½”ë“œ ë° ë°ì´í„° ì •ì˜
+//   // í´ë¼ì´ì–¸íŠ¸ë¡œë¶€í„° ì „ë‹¬ë˜ëŠ” ë©”ì‹œì§€ ì½”ë“œ
+//   private static final int REQ_LOGON = 1001;
+//   private static final int REQ_ENTERROOM = 1011;
+//   private static final int REQ_SENDWORDS = 1021;
+//   private static final int REQ_LOGOUT = 1031;
+//   private static final int REQ_QUITROOM = 1041;
+//
+//   // í´ë¼ì´ì–¸íŠ¸ì— ì „ì†¡í•˜ëŠ” ë©”ì‹œì§€ ì½”ë“œ
+//   private static final int YES_LOGON = 2001;
+//   private static final int NO_LOGON = 2002;
+//   private static final int YES_ENTERROOM = 2011;
+//   private static final int NO_ENTERROOM = 2012;
+//   private static final int MDY_USERIDS = 2013;
+//   private static final int YES_SENDWORDS = 2021;
+//   private static final int NO_SENDWORDS = 2022;
+//   private static final int YES_LOGOUT = 2031;
+//   private static final int NO_LOGOUT = 2032;
+//   private static final int YES_QUITROOM = 2041;
+//
+//   // ì—ëŸ¬ ë©”ì‹œì§€ ì½”ë“œ
+//   private static final int MSG_ALREADYUSER = 3001;
+//   private static final int MSG_SERVERFULL = 3002;
+//   private static final int MSG_CANNOTOPEN = 3011;
+//
+//   static{
+//      logonHash = new HashMap<String,ServerThread>(ChatServer.cs_maxclient);
+//      logonVector = new Vector<String>(ChatServer.cs_maxclient);
+//      roomHash = new HashMap<String,ServerThread>(ChatServer.cs_maxclient);
+//      roomVector = new Vector<String>(ChatServer.cs_maxclient);
+//   }
+//
+//   public ServerThread(Socket sock){
+//      try{
+//         st_sock = sock;
+//         st_in = new DataInputStream(sock.getInputStream());
+//         st_out = new DataOutputStream(sock.getOutputStream());
+//         st_buffer = new StringBuffer(2048);
+//      }catch(IOException e){
+//         System.out.println(e);
+//      }
+//   }
+//
+//   public void run(){
+//      try{
+//         while(true){
+//            String recvData = st_in.readUTF();
+//            StringTokenizer st = new StringTokenizer(recvData, SEPARATOR);
+//            int command = Integer.parseInt(st.nextToken());
+//            switch(command){
+//
+//               // ë¡œê·¸ì˜¨ ì‹œë„ ë©”ì‹œì§€ PACKET : REQ_LOGON|ID
+//               case REQ_LOGON:{
+//                  int result;
+//                  String id = st.nextToken(); // í´ë¼ì´ì–¸íŠ¸ì˜ IDë¥¼ ì–»ëŠ”ë‹¤.
+//                  result = addUser(id, this);
+//                  starttime = new Date();
+//                  st_buffer.setLength(0);
+//                  if(result ==0){  // ì ‘ì†ì„ í—ˆìš©í•œ ìƒíƒœ
+//                     st_buffer.append(YES_LOGON);
+//                     // YES_LOGON|ê°œì„¤ì‹œê°|ID1`ID2`..
+//                     st_buffer.append(SEPARATOR);
+//                     st_buffer.append(starttime);
+//                     st_buffer.append(SEPARATOR);
+//                     String userIDs = getUsers(); //ëŒ€í™”ë°© ì°¸ì—¬ ì‚¬ìš©ìIDë¥¼ êµ¬í•œë‹¤
+//                     st_buffer.append(userIDs);
+//                     send(st_buffer.toString());
+//                  }else{  // ì ‘ì†ë¶ˆê°€ ìƒíƒœ
+//                     st_buffer.append(NO_LOGON);  // NO_LOGON|errCode
+//                     st_buffer.append(SEPARATOR);
+//                     st_buffer.append(result); // ì ‘ì†ë¶ˆê°€ ì›ì¸ì½”ë“œ ì „ì†¡
+//                     send(st_buffer.toString());
+//                  }
+//                  break;
+//               }
+//
+//               // ëŒ€í™”ë°© ê°œì„¤ ì‹œë„ ë©”ì‹œì§€  PACKET : REQ_ENTERROOM|ID
+//               case REQ_ENTERROOM:{
+//                  st_buffer.setLength(0);
+//                  String id = st.nextToken(); // í´ë¼ì´ì–¸íŠ¸ì˜ IDë¥¼ ì–»ëŠ”ë‹¤.
+//                  if(checkUserID(id) == null){
+//
+//                     // NO_ENTERROOM PACKET : NO_ENTERROOM|errCode
+//                     st_buffer.append(NO_ENTERROOM);
+//                     st_buffer.append(SEPARATOR);
+//                     st_buffer.append(MSG_CANNOTOPEN);
+//                     send(st_buffer.toString());  // NO_ENTERROOM íŒ¨í‚·ì„ ì „ì†¡í•œë‹¤.
+//                     break;
+//                  }
+//
+//                  roomVector.addElement(id);  // ì‚¬ìš©ì ID ì¶”ê°€
+//                  roomHash.put(id, this); //ì‚¬ìš©ì ID ë° í´ë¼ì´ì–¸íŠ¸ì™€ í†µì‹ í•   ìŠ¤ë ˆë“œ ì €ì¥
+//
+//                  if(isOpenRoom == 0){  // ëŒ€í™”ë°© ê°œì„¤ì‹œê°„ ì„¤ì •
+//                     isOpenRoom = 1;
+//                     starttime = new Date();
+//                  }
+//
+//                  // YES_ENTERROOM PACKET : YES_ENTERROOM
+//                  st_buffer.append(YES_ENTERROOM);
+//                  send(st_buffer.toString()); // YES_ENTERROOM íŒ¨í‚·ì„ ì „ì†¡í•œë‹¤.
+//
+//                  //MDY_USERIDS PACKET : MDY_USERIDS|id1'id2' ....
+//                  st_buffer.setLength(0);
+//                  st_buffer.append(MDY_USERIDS);
+//                  st_buffer.append(SEPARATOR);
+//                  String userIDs = getRoomUsers(); // ëŒ€í™”ë°© ì°¸ì—¬ ì‚¬ìš©ì IDë¥¼ êµ¬í•œë‹¤
+//                  st_buffer.append(userIDs);
+//                  broadcast(st_buffer.toString()); // MDY_USERIDS íŒ¨í‚·ì„ ì „ì†¡í•œë‹¤.
+//                  break;
+//               }
+//
+//               // ëŒ€í™”ë§ ì „ì†¡ ì‹œë„ ë©”ì‹œì§€ PACKET : REQ_SENDWORDS|ID|ëŒ€í™”ë§
+//               case REQ_SENDWORDS:{
+//                  st_buffer.setLength(0);
+//                  st_buffer.append(YES_SENDWORDS);
+//                  st_buffer.append(SEPARATOR);
+//                  String id = st.nextToken(); // ì „ì†¡í•œ ì‚¬ìš©ìì˜ IDë¥¼ êµ¬í•œë‹¤.
+//                  st_buffer.append(id);
+//                  st_buffer.append(SEPARATOR);
+//                  try{
+//                     String data = st.nextToken(); // ëŒ€í™”ë§ì„ êµ¬í•œë‹¤.
+//                     st_buffer.append(data);
+//                  }catch(NoSuchElementException e){}
+//                  broadcast(st_buffer.toString()); // YES_SENDWORDS íŒ¨í‚·  ì „ì†¡
+//                  break;
+//               }
+//
+//               // LOGOUT ì „ì†¡ ì‹œë„ ë©”ì‹œì§€
+//               // PACKET : YES_LOGOUT|íƒˆí‡´ìID|íƒˆí‡´ì ì´ì™¸ì˜ ids
+//               case REQ_LOGOUT:{
+//
+//                  break;
+//               }
+//
+//               // ë°© ì…ì¥ì „ì˜ LOGOUT ì „ì†¡ ì‹œë„ ë©”ì‹œì§€ PACKET : YES_QUITROOM
+//               case REQ_QUITROOM:{
+//
+//                  break;
+//               }
+//
+//            } // switch ì¢…ë£Œ
+//
+//            Thread.sleep(100);
+//         } //while ì¢…ë£Œ
+//
+//      }catch(NullPointerException e){ // ë¡œê·¸ì•„ì›ƒì‹œ st_inì´ ì´ ì˜ˆì™¸ë¥¼ ë°œìƒí•˜ë¯€ë¡œ
+//      }catch(InterruptedException e){
+//      }catch(IOException e){
+//      }
+//   }
+//
+//   // ìì›ì„ í•´ì œí•œë‹¤.
+//
+//   public void release(){
+//
+//   }
+//
+//   /* í•´ì‰¬ í…Œì´ë¸”ì— ì ‘ì†ì„ ìš”ì²­í•œ í´ë¼ì´ì–¸íŠ¸ì˜ ID ë° ì „ì†¡ì„ ë‹´ë‹¹í•˜ëŠ” ìŠ¤ë ˆë“œë¥¼ ë“±ë¡.
+//          ì¦‰, í•´ì‰¬ í…Œì´ë¸”ì€ ëŒ€í™”ë¥¼ í•˜ëŠ” í´ë¼ì´ì–¸íŠ¸ì˜ ë¦¬ìŠ¤íŠ¸ë¥¼ í¬í•¨. */
+//   private static synchronized int addUser(String id, ServerThread client){
+//      if(checkUserID(id) != null){
+//         return MSG_ALREADYUSER;
+//      }
+//      if(logonHash.size() >= ChatServer.cs_maxclient){
+//         return MSG_SERVERFULL;
+//      }
+//      logonVector.addElement(id);  // ì‚¬ìš©ì ID ì¶”ê°€
+//      logonHash.put(id, client); // ì‚¬ìš©ì ID ë° í´ë¼ì´ì–¸íŠ¸ì™€ í†µì‹ í•  ìŠ¤ë ˆë“œë¥¼ ì €ì¥í•œë‹¤.
+//      client.st_ID = id;
+//      return 0; // í´ë¼ì´ì–¸íŠ¸ì™€ ì„±ê³µì ìœ¼ë¡œ ì ‘ì†í•˜ê³ , ëŒ€í™”ë°©ì´ ì´ë¯¸ ê°œì„¤ëœ ìƒíƒœ.
+//   }
+//
+//   /* ì ‘ì†ì„ ìš”ì²­í•œ ì‚¬ìš©ìì˜ IDì™€ ì¼ì¹˜í•˜ëŠ” IDê°€ ì´ë¯¸ ì‚¬ìš©ë˜ëŠ” ì§€ë¥¼ ì¡°ì‚¬í•œë‹¤.
+//           ë°˜í™˜ê°’ì´ nullì´ë¼ë©´ ìš”êµ¬í•œ IDë¡œ ëŒ€í™”ë°© ì…ì¥ì´ ê°€ëŠ¥í•¨. */
+//   private static ServerThread checkUserID(String id){
+//      ServerThread alreadyClient = null;
+//      alreadyClient = (ServerThread) logonHash.get(id);
+//      return alreadyClient;
+//   }
+//
+//   // ë¡œê·¸ì˜¨ì— ì°¸ì—¬í•œ ì‚¬ìš©ì IDë¥¼ êµ¬í•œë‹¤.
+//   private String getUsers(){
+//      StringBuffer id = new StringBuffer();
+//      String ids;
+//      Enumeration<String> enu = logonVector.elements();
+//      while(enu.hasMoreElements()){
+//         id.append(enu.nextElement());
+//         id.append(DELIMETER);
+//      }
+//      try{
+//         ids = new String(id);  // ë¬¸ìì—´ë¡œ ë³€í™˜í•œë‹¤.
+//         ids = ids.substring(0, ids.length()-1); // ë§ˆì§€ë§‰ "`"ë¥¼ ì‚­ì œí•œë‹¤.
+//      }catch(StringIndexOutOfBoundsException e){
+//         return "";
+//      }
+//      return ids;
+//   }
+//
+//   // ëŒ€í™”ë°©ì— ì°¸ì—¬í•œ ì‚¬ìš©ì IDë¥¼ êµ¬í•œë‹¤.
+//
+//   private String getRoomUsers(){
+//      StringBuffer id = new StringBuffer();
+//      String ids;
+//      Enumeration<String> enu = roomVector.elements();
+//      while(enu.hasMoreElements()){
+//         id.append(enu.nextElement());
+//         id.append(DELIMETER);
+//      }
+//      try{
+//         ids = new String(id);
+//         ids = ids.substring(0, ids.length()-1); // ë§ˆì§€ë§‰ "`"ë¥¼ ì‚­ì œí•œë‹¤.
+//      }catch(StringIndexOutOfBoundsException e){
+//         return "";
+//      }
+//      return ids;
+//   }
+//
+//   // ëŒ€í™”ë°©ì— ì°¸ì—¬í•œ ëª¨ë“  ì‚¬ìš©ì(ë¸Œë¡œë“œì¼€ìŠ¤íŒ…)ì—ê²Œ ë°ì´í„°ë¥¼ ì „ì†¡í•œë‹¤.
+//   public synchronized void broadcast(String sendData) throws IOException{
+//      ServerThread client;
+//      Iterator<String> it = roomHash.keySet().iterator();
+//      while(it.hasNext()){
+//         client = roomHash.get(it.next());
+//         client.send(sendData);
+//      }
+//   }
+//
+//   // ë°ì´í„°ë¥¼ ì „ì†¡í•œë‹¤.
+//   public void send(String sendData) throws IOException{
+//      synchronized(st_out){
+//         st_out.writeUTF(sendData);
+//         st_out.flush();
+//      }
+//   }
+//}

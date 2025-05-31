@@ -29,7 +29,7 @@ public class hw_12_2 {
                 String contentType = conn.getContentType();
                 System.out.println("Content-Type: " + contentType);
 
-                // 바이너리 파일인지 판별 (text나 html이 아니면 바이너리로 간주)
+                // 바이너리 파일인지 판별 (text나 html이 아니면 not binaryFile로 간주)
                 if (contentType != null && !contentType.startsWith("text") && !contentType.contains("html")) {
                     // 파일 이름 추출
                     String filePath = url.getPath();

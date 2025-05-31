@@ -1,38 +1,38 @@
-package SimpleChat;
-
-import java.io.*;
-import java.net.*;
-
-public class ChatServer
-{
-   public static final int cs_port = 2777;
-   public static final int cs_maxclient=10;
-
-// Å¬¶óÀÌ¾ğÆ®·ÎºÎÅÍ Á¢¼Ó¿äÃ»À» ±â´Ù¸®°í, ¼ÒÄÏÀ» »ı¼ºÇÑ´Ù.
-   public static void main(String args[]){
-      try{
-         ServerSocket ss_socket = new ServerSocket(cs_port);
-         while(true){
-            Socket sock = null;
-            ServerThread client = null; //Å¬¶óÀÌ¾ğÆ®¿Í Åë½ÅÇÒ ¼­¹ö¼ÒÄÏ
-            try{
-               sock = ss_socket.accept(); // Å¬¶óÀÌ¾ğÆ®ÀÇ Á¢¼ÓÀ» ±â´Ù¸°´Ù.
-               client = new ServerThread(sock); 
-               client.start();
-            }catch(IOException e){
-               System.out.println(e);
-               try{
-                  if(sock != null)
-                     sock.close();
-               }catch(IOException e1){
-                  System.out.println(e);
-               }finally{
-                  sock = null;
-               }
-            }
-         }
-      }catch(IOException e){
-         // ¼­¹ö°¡ Á¤»óÀûÀ¸·Î µ¿ÀÛÇÏÁö ¾Ê´Â °æ¿ì¸¦ Ã³¸®ÇÑ´Ù.
-      }
-   }
-}
+//package example10;
+//
+//import java.io.*;
+//import java.net.*;
+//
+//public class ChatServer
+//{
+//   public static final int cs_port = 2777;
+//   public static final int cs_maxclient=10;
+//
+//   // í´ë¼ì´ì–¸íŠ¸ë¡œë¶€í„° ì ‘ì†ìš”ì²­ì„ ê¸°ë‹¤ë¦¬ê³ , ì†Œì¼“ì„ ìƒì„±í•œë‹¤.
+//   public static void main(String args[]){
+//      try{
+//         ServerSocket ss_socket = new ServerSocket(cs_port);
+//         while(true){
+//            Socket sock = null;
+//            ServerThread client = null; //í´ë¼ì´ì–¸íŠ¸ì™€ í†µì‹ í•  ì„œë²„ì†Œì¼“
+//            try{
+//               sock = ss_socket.accept(); // í´ë¼ì´ì–¸íŠ¸ì˜ ì ‘ì†ì„ ê¸°ë‹¤ë¦°ë‹¤.
+//               client = new ServerThread(sock);
+//               client.start();
+//            }catch(IOException e){
+//               System.out.println(e);
+//               try{
+//                  if(sock != null)
+//                     sock.close();
+//               }catch(IOException e1){
+//                  System.out.println(e);
+//               }finally{
+//                  sock = null;
+//               }
+//            }
+//         }
+//      }catch(IOException e){
+//         System.out.println(e);
+//      }
+//   }
+//}
