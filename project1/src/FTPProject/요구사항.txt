@@ -1,0 +1,32 @@
+요구사항 요약
+1. UDP 프로토콜 사용(DatagramSocket, DatagramPacket)
+2. 파일 읽기/쓰기 요청(RRQ, WRQ)
+3. 데이터 전송은 512byte 블록단위 - byte[] buf = 512;
+4. 각 데이터는 블록 번호 포함, 수신 후 ACK 필요
+5. 512 byte 미만이면 종료
+6. TimeOut 및 재전송 처리
+7. 에러 발생 시 ERROR 패킷 전송
+8. 패킷 타입 정의 :
+    - RRQ(Read Request)
+    - WRQ(Write Request)
+    - DATA
+    - ACK
+    - NACK(선택사항)
+    - ERROR
+
+구조 설계
+    - FileClient
+    - FileServer
+    - PacketUtil -> 패킷 포맷 정의 및 처리
+    - Constants -> 타입 정의
+
+흐름 설계
+클라이언트
+    - RRQ or WRQ 패킷을 클라이언트에서 전송한다.
+    - 파일 블록 단위로 송수신 진행
+    - ACK 수신 및 재전송 처리를 한다.
+서버
+    - Request 수신
+    - 요청에 따라 파일 열기 및 송수신
+    - 512byte 이하 데이터를 수신하면 종료한다.
+
