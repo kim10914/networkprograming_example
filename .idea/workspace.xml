@@ -1,16 +1,45 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
   <component name="ChangeListManager">
-    <list default="true" id="f27f7c28-1e53-4d61-a2ec-129938e48220" name="변경" comment="" />
+    <list default="true" id="f27f7c28-1e53-4d61-a2ec-129938e48220" name="변경" comment="">
+      <change afterPath="$PROJECT_DIR$/project1/src/NIO_Project/ChatClient.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/project1/src/NIO_Project/ChatServer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/project1/src/NIO_Project/Message.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/project1/src/NIO_Project/MessageType.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/project1/src/NIO_Project/요구사항.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 7
-}]]></component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;kim10914&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/kim10914/networkprograming_example.git&quot;,
+    &quot;accountId&quot;: &quot;ac74e8b1-7db0-4963-b1b7-6f965a61da4f&quot;
+  }
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 7
+}</component>
   <component name="ProjectId" id="2wkwPld5mesjb3Ay6vV6ByKYxcD" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -18,17 +47,28 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "master",
     "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "E:/3학년 1학기(25년)/네트워크 프로그래밍/network progaming/project1",
+    "last_opened_file_path": "D:/3학년 1학기(25년)/네트워크 프로그래밍/network progaming/project1/src/NIO_Project",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\3학년 1학기(25년)\네트워크 프로그래밍\network progaming\project1\src\NIO_Project" />
+    </key>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-9823dce3aa75-a94e463ab2e7-intellij.indexing.shared.core-IU-243.26053.27" />
-        <option value="bundled-js-predefined-d6986cc7102b-1632447f56bf-JavaScript-IU-243.26053.27" />
+        <option value="bundled-jdk-9823dce3aa75-fdfe4dae3a2d-intellij.indexing.shared.core-IU-243.22562.218" />
+        <option value="bundled-js-predefined-d6986cc7102b-deb605915726-JavaScript-IU-243.22562.218" />
       </set>
     </attachedChunks>
   </component>
@@ -41,6 +81,8 @@
       <option name="presentableId" value="Default" />
       <updated>1746598857195</updated>
       <workItem from="1746598858350" duration="65000" />
+      <workItem from="1749819961766" duration="3861000" />
+      <workItem from="1749870596558" duration="651000" />
     </task>
     <servers />
   </component>
